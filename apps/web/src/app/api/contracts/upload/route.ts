@@ -2,6 +2,7 @@ export const runtime = 'nodejs'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { requireAuth } from '@/lib/api-auth'
 
 const SUPABASE_URL = process.env.SUPABASE_URL!
 const SUPABASE_KEY = process.env.SUPABASE_KEY!
@@ -186,10 +187,8 @@ const DEMO_USER_ID = '00000000-0000-0000-0000-000000000001'
 
 export async function POST(request: NextRequest) {
   try {
-    // AUTH CHECK — temporarily bypassed for local testing
-    // Re-enable once Google OAuth redirect URI is configured for the active port
-    // const session = await auth()
-    // if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 
@@ -219,6 +218,14 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           { error: 'No file provided in multipart form' },
           { status: 400 }
+        )
+      }
+
+      const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+      if (file.size > MAX_FILE_SIZE) {
+        return NextResponse.json(
+          { error: 'File size exceeds 10MB limit' },
+          { status: 413 }
         )
       }
 
@@ -271,7 +278,7 @@ export async function POST(request: NextRequest) {
       const errMsg = claudeErr instanceof Error ? claudeErr.message : String(claudeErr)
       console.error('Claude parsing error:', errMsg)
       return NextResponse.json(
-        { error: `Failed to parse contract with AI: ${errMsg}` },
+        { error: 'Failed to parse contract with AI' },
         { status: 502 }
       )
     }

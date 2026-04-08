@@ -2,6 +2,7 @@ export const runtime = 'nodejs'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { requireAuth } from '@/lib/api-auth'
 
 const SUPABASE_URL = process.env.SUPABASE_URL!
 const SUPABASE_KEY = process.env.SUPABASE_KEY!
@@ -54,6 +55,9 @@ export async function GET(
   context: RouteContext
 ) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id } = await context.params
 
     if (!id) {
@@ -117,6 +121,9 @@ export async function DELETE(
   context: RouteContext
 ) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const { id } = await context.params
 
     if (!id) {

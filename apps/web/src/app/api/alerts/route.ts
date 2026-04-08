@@ -2,6 +2,7 @@ export const runtime = 'nodejs'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { requireAuth } from '@/lib/api-auth'
 
 const SUPABASE_URL = process.env.SUPABASE_URL!
 const SUPABASE_KEY = process.env.SUPABASE_KEY!
@@ -22,6 +23,9 @@ interface Alert {
 
 export async function GET() {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 
     const { data, error } = await supabase
@@ -72,6 +76,9 @@ export async function GET() {
 
 export async function PATCH(request: NextRequest) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const body = await request.json()
     const { id, status } = body as { id?: string; status?: string }
 

@@ -2,6 +2,7 @@ export const runtime = 'nodejs'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { requireAuth, sanitizeSearch } from '@/lib/api-auth'
 
 const SUPABASE_URL = process.env.SUPABASE_URL!
 const SUPABASE_KEY = process.env.SUPABASE_KEY!
@@ -26,6 +27,9 @@ interface Contract {
 
 export async function GET(request: NextRequest) {
   try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
     const { searchParams } = new URL(request.url)
     const status = searchParams.get('status')
@@ -41,9 +45,12 @@ export async function GET(request: NextRequest) {
     }
 
     if (search) {
-      query = query.or(
-        `name.ilike.%${search}%,party_a.ilike.%${search}%,party_b.ilike.%${search}%`
-      )
+      const s = sanitizeSearch(search)
+      if (s) {
+        query = query.or(
+          `name.ilike.%${s}%,party_a.ilike.%${s}%,party_b.ilike.%${s}%`
+        )
+      }
     }
 
     const { data, error, count } = await query

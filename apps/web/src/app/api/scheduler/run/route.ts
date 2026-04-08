@@ -80,8 +80,15 @@ async function checkContracts() {
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const cronSecret = process.env.CRON_SECRET
+    if (cronSecret) {
+      const authHeader = request.headers.get('authorization')
+      if (authHeader !== `Bearer ${cronSecret}`) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+    }
     const result = await checkContracts()
 
     return NextResponse.json({
@@ -93,7 +100,7 @@ export async function GET() {
   } catch (err) {
     console.error('Unexpected error in GET /api/scheduler/run:', err)
     return NextResponse.json(
-      { error: 'Internal server error', details: String(err) },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }

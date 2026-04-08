@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import DashboardCharts from '@/app/components/charts/DashboardCharts';
 import ExpiringModal from '@/components/modals/ExpiringModal';
 import HighRiskModal from '@/components/modals/HighRiskModal';
 import AlertsModal from '@/components/modals/AlertsModal';
@@ -358,6 +359,9 @@ export default function DashboardPage() {
               ))}
         </div>
       )}
+
+      {/* Analytics Charts */}
+      <DashboardCharts />
 
       {/* Recent Contracts */}
       <div className="bg-white rounded-xl border border-gray-200">

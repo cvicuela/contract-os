@@ -2,17 +2,16 @@ export const runtime = 'nodejs'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { requireAuth } from '@/lib/api-auth'
 
 const SUPABASE_URL = process.env.SUPABASE_URL!
 const SUPABASE_KEY = process.env.SUPABASE_KEY!
 
-export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url)
-  const email = searchParams.get('email')
+export async function GET() {
+  const { session, error: authError } = await requireAuth()
+  if (authError) return authError
 
-  if (!email) {
-    return NextResponse.json({ error: 'email required' }, { status: 400 })
-  }
+  const email = session!.user!.email
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
   const { data, error } = await supabase
@@ -29,6 +28,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const { error: authError } = await requireAuth()
+  if (authError) return authError
+
   const body = await request.json()
   const { email, google_id } = body as { email: string; google_id?: string }
 

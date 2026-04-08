@@ -5,8 +5,7 @@ export default auth((req) => {
   const isLoggedIn = !!req.auth
   const { pathname } = req.nextUrl
 
-  // Auth temporarily open while Google OAuth redirect URI is being configured
-  const isPublic = true || (
+  const isPublic = (
     pathname.startsWith("/login") ||
     pathname.startsWith("/api/") ||
     pathname.startsWith("/_next") ||

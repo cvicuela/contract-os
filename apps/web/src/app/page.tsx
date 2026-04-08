@@ -275,16 +275,16 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="p-8 max-w-screen-xl mx-auto space-y-8">
+    <div className="p-4 sm:p-8 max-w-screen-xl mx-auto space-y-8">
       {/* Top header bar */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">Dashboard</h1>
+          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight">Dashboard</h1>
           <p className="text-sm text-gray-500 mt-1">
             {getGreeting()}, {userName} &mdash; overview of your contract portfolio
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           {checksResult && (
             <span className="text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 max-w-xs">
               {checksResult}
@@ -293,7 +293,7 @@ export default function DashboardPage() {
           <button
             onClick={runChecks}
             disabled={runningChecks}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
           >
             {runningChecks ? (
               <>
@@ -314,7 +314,7 @@ export default function DashboardPage() {
           </button>
           <button
             onClick={() => router.push('/contracts?upload=true')}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -367,7 +367,9 @@ export default function DashboardPage() {
             View all &rarr;
           </Link>
         </div>
-        <div className="overflow-x-auto">
+
+        {/* Desktop table */}
+        <div className="hidden sm:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100">
@@ -429,6 +431,49 @@ export default function DashboardPage() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile card list */}
+        <div className="sm:hidden divide-y divide-gray-100">
+          {loadingContracts ? (
+            [...Array(3)].map((_, i) => (
+              <div key={i} className="p-4 animate-pulse space-y-2">
+                <div className="h-4 bg-gray-100 rounded w-3/4" />
+                <div className="h-3 bg-gray-100 rounded w-1/2" />
+              </div>
+            ))
+          ) : statsError ? (
+            <div className="px-4 py-6 text-center text-sm text-red-600">{statsError}</div>
+          ) : contracts.length === 0 ? (
+            <div className="px-4 py-10 text-center text-sm text-gray-400">No contracts yet</div>
+          ) : (
+            contracts.map((c) => {
+              const risk = getRiskColor(c.risk_score);
+              const daysLeft = getDaysLeft(c.end_date);
+              return (
+                <Link key={c.id} href={`/contracts/${c.id}`} className="block p-4 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <span className="font-medium text-gray-900 text-sm leading-snug">{c.name}</span>
+                    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0 ${getStatusColors(c.status)}`}>
+                      {c.status.charAt(0).toUpperCase() + c.status.slice(1)}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
+                    <span>{c.type}</span>
+                    <span>{c.party_a} / {c.party_b}</span>
+                    <span>{new Date(c.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full font-semibold ${risk.bg} ${risk.text}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${risk.dot}`} />
+                      {c.risk_score}/10
+                    </span>
+                    <span className={`font-medium ${daysLeft < 0 ? 'text-red-600' : daysLeft < 30 ? 'text-amber-600' : 'text-gray-600'}`}>
+                      {daysLeft < 0 ? `${Math.abs(daysLeft)}d ago` : `${daysLeft}d left`}
+                    </span>
+                  </div>
+                </Link>
+              );
+            })
+          )}
         </div>
       </div>
 

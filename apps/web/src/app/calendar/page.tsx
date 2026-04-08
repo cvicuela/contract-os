@@ -64,6 +64,7 @@ function getFirstDayOfWeek(year: number, month: number) {
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const DAYS_SHORT = ['S','M','T','W','T','F','S'];
 
 export default function CalendarPage() {
   const today = new Date();
@@ -200,11 +201,11 @@ export default function CalendarPage() {
   }, [events, year, month]);
 
   return (
-    <div className="p-8 max-w-screen-xl mx-auto space-y-6 print-hide">
+    <div className="p-4 sm:p-8 max-w-screen-xl mx-auto space-y-6 print-hide">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">Calendar</h1>
+          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight">Calendar</h1>
           <p className="text-sm text-gray-500 mt-1">Contract deadlines, obligations & alerts at a glance</p>
         </div>
 
@@ -239,9 +240,10 @@ export default function CalendarPage() {
 
           {/* Day labels */}
           <div className="grid grid-cols-7 border-b border-gray-100">
-            {DAYS.map((d) => (
+            {DAYS.map((d, i) => (
               <div key={d} className="py-2 text-center text-xs font-medium text-gray-400 tracking-wide">
-                {d}
+                <span className="hidden sm:inline">{d}</span>
+                <span className="sm:hidden">{DAYS_SHORT[i]}</span>
               </div>
             ))}
           </div>
@@ -253,7 +255,7 @@ export default function CalendarPage() {
             <div className="grid grid-cols-7">
               {/* Empty cells before first day */}
               {[...Array(firstDow)].map((_, i) => (
-                <div key={`empty-${i}`} className="min-h-[90px] border-b border-r border-gray-50 bg-gray-50/50" />
+                <div key={`empty-${i}`} className="min-h-[52px] sm:min-h-[90px] border-b border-r border-gray-50 bg-gray-50/50" />
               ))}
 
               {/* Day cells */}
@@ -269,7 +271,7 @@ export default function CalendarPage() {
                   <button
                     key={day}
                     onClick={() => setSelectedDay(isSelected ? null : dateStr)}
-                    className={`min-h-[90px] border-b border-r border-gray-100 p-1.5 text-left transition-colors hover:bg-indigo-50/50 ${
+                    className={`min-h-[52px] sm:min-h-[90px] border-b border-r border-gray-100 p-1 sm:p-1.5 text-left transition-colors hover:bg-indigo-50/50 ${
                       isSelected ? 'bg-indigo-50 ring-1 ring-inset ring-indigo-200' : ''
                     } ${isPast ? 'opacity-60' : ''}`}
                   >
@@ -287,7 +289,8 @@ export default function CalendarPage() {
                           className={`text-[10px] leading-tight px-1 py-0.5 rounded truncate border ${EVENT_STYLES[ev.type].badge}`}
                           title={ev.label}
                         >
-                          {ev.label}
+                          <span className="hidden sm:inline">{ev.label}</span>
+                          <span className={`sm:hidden inline-block w-1.5 h-1.5 rounded-full ${EVENT_STYLES[ev.type].dot}`} />
                         </div>
                       ))}
                       {dayEvents.length > 3 && (

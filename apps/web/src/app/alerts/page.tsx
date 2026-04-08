@@ -133,10 +133,10 @@ export default function AlertsPage() {
   const snoozedCount = alerts.filter((a) => a.is_snoozed).length;
 
   return (
-    <div className="p-8 max-w-screen-xl mx-auto space-y-6">
+    <div className="p-4 sm:p-8 max-w-screen-xl mx-auto space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-semibold text-gray-900 tracking-tight flex items-center gap-2.5">
+        <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight flex items-center gap-2.5">
           Alerts
           {unreadCount > 0 && (
             <span className="inline-flex items-center justify-center min-w-[1.5rem] h-6 px-1.5 rounded-full bg-red-500 text-white text-xs font-semibold">
@@ -148,7 +148,7 @@ export default function AlertsPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1 w-fit">
+      <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1 w-full sm:w-fit overflow-x-auto">
         {FILTERS.map((f) => (
           <button
             key={f}
@@ -204,7 +204,7 @@ export default function AlertsPage() {
           filtered.map((alert) => (
             <div
               key={alert.id}
-              className={`bg-white rounded-xl border p-5 flex items-start gap-4 transition-opacity ${
+              className={`bg-white rounded-xl border p-4 sm:p-5 flex flex-col sm:flex-row items-start gap-3 sm:gap-4 transition-opacity ${
                 alert.status === "read" ? "opacity-60" : ""
               } ${getCardBorder(alert.severity, alert.is_snoozed)}`}
             >
@@ -258,7 +258,7 @@ export default function AlertsPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="flex flex-row sm:flex-row items-center gap-2 flex-shrink-0 self-end sm:self-start">
                 <SnoozeButton
                   itemId={alert.id}
                   deadline={alert.deadline}

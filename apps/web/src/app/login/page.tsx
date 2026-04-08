@@ -148,7 +148,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gray-950 text-white">
 
       {/* ── Nav ── */}
-      <nav className="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto">
+      <nav className="flex items-center justify-between px-4 sm:px-6 py-4 max-w-6xl mx-auto">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
             <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 text-white">
@@ -175,7 +175,7 @@ export default function LoginPage() {
       </nav>
 
       {/* ── Hero ── */}
-      <section className="max-w-6xl mx-auto px-6 pt-16 pb-20 text-center">
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 pt-12 sm:pt-16 pb-16 sm:pb-20 text-center">
         <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-1.5 text-xs text-gray-400 mb-8">
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
           Powered by Claude AI — the most capable AI for document analysis
@@ -225,7 +225,7 @@ export default function LoginPage() {
       </section>
 
       {/* ── Features ── */}
-      <section className="max-w-6xl mx-auto px-6 pb-20">
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 pb-20">
         <div className="text-center mb-12">
           <h2 className="text-2xl font-bold mb-3">Everything you need to manage contracts</h2>
           <p className="text-gray-400 text-sm">From upload to insight in under 30 seconds.</p>
@@ -244,7 +244,7 @@ export default function LoginPage() {
       </section>
 
       {/* ── Pricing ── */}
-      <section id="pricing" className="max-w-6xl mx-auto px-6 pb-24">
+      <section id="pricing" className="max-w-6xl mx-auto px-4 sm:px-6 pb-24">
         <div className="text-center mb-12">
           <h2 className="text-2xl font-bold mb-3">Simple, transparent pricing</h2>
           <p className="text-gray-400 text-sm">Start free. Upgrade when you&apos;re ready.</p>
@@ -257,7 +257,7 @@ export default function LoginPage() {
               className={`relative rounded-2xl p-6 flex flex-col gap-5 ${
                 plan.highlight
                   ? "bg-indigo-600 border border-indigo-500 shadow-xl shadow-indigo-500/20"
-                  : "bg-white/5 border border-white/10"
+                  : "bg-slate-800 border border-slate-700"
               }`}
             >
               {plan.badge && (
@@ -267,22 +267,22 @@ export default function LoginPage() {
               )}
 
               <div>
-                <p className={`text-sm font-medium mb-1 ${plan.highlight ? "text-indigo-200" : "text-gray-400"}`}>
+                <p className={`text-sm font-medium mb-1 ${plan.highlight ? "text-indigo-200" : "text-slate-400"}`}>
                   {plan.name}
                 </p>
                 <div className="flex items-end gap-1 mb-1">
-                  <span className="text-3xl font-bold">{plan.price}</span>
-                  <span className={`text-sm pb-1 ${plan.highlight ? "text-indigo-200" : "text-gray-500"}`}>
+                  <span className={`text-3xl font-bold ${plan.highlight ? "text-white" : "text-white"}`}>{plan.price}</span>
+                  <span className={`text-sm pb-1 ${plan.highlight ? "text-indigo-200" : "text-slate-400"}`}>
                     /{plan.period}
                   </span>
                 </div>
-                <p className={`text-xs leading-relaxed ${plan.highlight ? "text-indigo-200" : "text-gray-400"}`}>
+                <p className={`text-xs leading-relaxed ${plan.highlight ? "text-indigo-200" : "text-slate-400"}`}>
                   {plan.description}
                 </p>
               </div>
 
               <div className={`text-xs font-semibold px-3 py-1.5 rounded-lg w-fit ${
-                plan.highlight ? "bg-indigo-500/50 text-white" : "bg-white/8 text-gray-300"
+                plan.highlight ? "bg-indigo-500/50 text-white" : "bg-slate-700 text-slate-300"
               }`}>
                 {plan.contracts}
               </div>
@@ -293,7 +293,7 @@ export default function LoginPage() {
                     <svg className={`w-4 h-4 shrink-0 mt-0.5 ${plan.highlight ? "text-indigo-200" : "text-emerald-400"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    <span className={plan.highlight ? "text-indigo-100" : "text-gray-300"}>
+                    <span className={plan.highlight ? "text-indigo-100" : "text-slate-300"}>
                       {feat}
                     </span>
                   </li>
@@ -305,14 +305,14 @@ export default function LoginPage() {
                 className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all ${
                   plan.highlight
                     ? "bg-white text-indigo-700 hover:bg-indigo-50 shadow"
-                    : "bg-white/10 text-white hover:bg-white/15 border border-white/15"
+                    : "bg-slate-700 text-white hover:bg-slate-600 border border-slate-600"
                 }`}
               >
                 {plan.cta}
               </button>
 
               {plan.paypal && (
-                <p className="text-center text-xs text-gray-500 -mt-2">
+                <p className="text-center text-xs text-slate-500 -mt-2">
                   Billed via PayPal — cancel anytime
                 </p>
               )}
@@ -321,14 +321,14 @@ export default function LoginPage() {
         </div>
 
         {/* Enterprise row */}
-        <div className="mt-6 bg-white/3 border border-white/8 rounded-2xl px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="mt-6 bg-slate-800 border border-slate-700 rounded-2xl px-6 sm:px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
-            <p className="font-semibold mb-1">Enterprise</p>
-            <p className="text-sm text-gray-400">Custom contracts, SSO, SLA, API access, and a dedicated account manager.</p>
+            <p className="font-semibold mb-1 text-white">Enterprise</p>
+            <p className="text-sm text-slate-400">Custom contracts, SSO, SLA, API access, and a dedicated account manager.</p>
           </div>
           <a
             href="mailto:hello@contractos.ai"
-            className="shrink-0 text-sm font-medium border border-white/20 text-white px-5 py-2.5 rounded-xl hover:bg-white/8 transition-colors"
+            className="shrink-0 text-sm font-medium border border-slate-600 text-white px-5 py-2.5 rounded-xl hover:bg-slate-700 transition-colors"
           >
             Contact us
           </a>

@@ -177,16 +177,16 @@ export default function ContractsPage() {
   };
 
   return (
-    <div className="p-8 max-w-screen-xl mx-auto space-y-6">
+    <div className="p-4 sm:p-8 max-w-screen-xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">Contracts</h1>
+          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight">Contracts</h1>
           <p className="text-sm text-gray-500 mt-1">Manage and analyze your contracts</p>
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors shadow-sm"
+          className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors shadow-sm flex-shrink-0"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -209,7 +209,7 @@ export default function ContractsPage() {
             className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
           />
         </div>
-        <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1">
+        <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1 overflow-x-auto">
           {TABS.map((tab) => (
             <button
               key={tab}
@@ -231,7 +231,8 @@ export default function ContractsPage() {
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       ) : (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="overflow-x-auto">
+          {/* Desktop table */}
+          <div className="hidden sm:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50">
@@ -305,6 +306,47 @@ export default function ContractsPage() {
               </tbody>
             </table>
           </div>
+
+          {/* Mobile card list */}
+          <div className="sm:hidden divide-y divide-gray-100">
+            {loading ? (
+              [...Array(4)].map((_, i) => (
+                <div key={i} className="p-4 animate-pulse space-y-2">
+                  <div className="h-4 bg-gray-100 rounded w-3/4" />
+                  <div className="h-3 bg-gray-100 rounded w-1/2" />
+                </div>
+              ))
+            ) : filtered.length === 0 ? (
+              <div className="px-4 py-12 text-center text-sm text-gray-400">
+                {search ? "No contracts match your search" : "No contracts yet — upload one to get started"}
+              </div>
+            ) : (
+              filtered.map((c) => {
+                const risk = getRiskColors(c.risk_score);
+                return (
+                  <Link key={c.id} href={`/contracts/${c.id}`} className="block p-4 hover:bg-gray-50 transition-colors">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <span className="font-medium text-gray-900 text-sm leading-snug">{c.name}</span>
+                      <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0 ${getStatusColors(c.status)}`}>
+                        {c.status.charAt(0).toUpperCase() + c.status.slice(1)}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
+                      <span>{c.type}</span>
+                      <span>{c.party_a} / {c.party_b}</span>
+                      <span className="whitespace-nowrap">
+                        {new Date(c.start_date).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
+                        {" → "}
+                        {new Date(c.end_date).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
+                      </span>
+                      <span className={`font-semibold ${risk.text}`}>Risk: {c.risk_score}/10</span>
+                    </div>
+                  </Link>
+                );
+              })
+            )}
+          </div>
+
           {!loading && filtered.length > 0 && (
             <div className="px-4 py-3 border-t border-gray-100 bg-gray-50 text-xs text-gray-400">
               Showing {filtered.length} of {contracts.length} contracts

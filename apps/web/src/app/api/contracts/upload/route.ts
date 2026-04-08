@@ -1,4 +1,5 @@
 export const runtime = 'nodejs'
+export const maxDuration = 60
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
@@ -81,24 +82,31 @@ Schema:
 Rules: null for unknown strings, 0 for unknown numbers. risk_score: consider financial exposure, data sensitivity, termination complexity.
 improvement_tips: provide 4-7 specific, actionable bullet points that would make this contract a perfect 10/10. Each tip must identify a concrete gap or weakness found in this contract and explain exactly how to fix it (e.g. "Add a force majeure clause covering pandemic, natural disaster, and cyber-attack scenarios" not "Add missing clauses"). Focus on: missing protective clauses, vague language, liability gaps, IP ownership, data privacy, dispute resolution, termination rights, indemnification, and renewal terms.`
 
-const VERIFY_PROMPT = `You are a contract data validator. You will receive a JSON object extracted from a contract by another AI, plus a short snippet of the original contract text.
 
-Your job: fix any errors in the JSON — wrong dates, swapped parties, missed fields, bad risk_score — and return the corrected JSON.
+async function extractTextFromBuffer(buffer: Buffer, mimeType: string, fileName: string): Promise<string> {
+  const ext = fileName.toLowerCase().replace(/^.*\./, '.')
 
-Rules:
-- Return ONLY valid JSON, no markdown, no explanation
-- Keep the exact same schema
-- If a field looks correct, keep it as-is
-- Fix dates to YYYY-MM-DD format if malformed
-- risk_score must be 1-10 integer`
-
-async function extractTextFromBuffer(buffer: Buffer, mimeType: string): Promise<string> {
   if (mimeType === 'application/pdf') {
     const { PDFParse } = await import('pdf-parse')
     const parser = new PDFParse({ data: new Uint8Array(buffer) })
     const result = await parser.getText()
     return result.text.replace(/\s{2,}/g, ' ').trim()
   }
+
+  if (ext === '.docx' || mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+    const mammoth = await import('mammoth')
+    const result = await mammoth.extractRawText({ buffer })
+    return result.value.replace(/\s{2,}/g, ' ').trim()
+  }
+
+  if (ext === '.doc' || mimeType === 'application/msword') {
+    const WordExtractor = (await import('word-extractor')).default
+    const extractor = new WordExtractor()
+    const doc = await extractor.extract(buffer)
+    return doc.getBody().replace(/\s{2,}/g, ' ').trim()
+  }
+
+  // .txt or other plain text
   return buffer.toString('utf8')
 }
 
@@ -113,40 +121,100 @@ async function parseContractWithClaude(
   const { default: Anthropic } = await import('@anthropic-ai/sdk')
   const anthropic = new Anthropic({ apiKey: CLAUDE_API_KEY })
 
-  // Step 1: Haiku extracts the full JSON (fast)
-  const haikusMsg = await anthropic.messages.create({
+  // Step 1: Extract basic info locally (instant, zero tokens)
+  const basicInfo = extractBasicInfo(text, contractName)
+
+  // Step 2: Single Haiku call — refine the pre-extracted JSON + short contract snippet
+  // This uses far fewer tokens than sending the full 30k contract text
+  const refineMsg = await anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 2048,
     system: EXTRACT_PROMPT,
     messages: [
       {
         role: 'user',
-        content: `Contract name: "${contractName}"\n\n${text.slice(0, 30_000)}`,
+        content: `Pre-extracted data (fix errors, fill gaps, add obligations and improvement_tips):\n${JSON.stringify(basicInfo)}\n\nContract text:\n${text.slice(0, 8_000)}`,
       },
     ],
   })
 
-  const haikuRaw = haikusMsg.content[0].type === 'text' ? haikusMsg.content[0].text : ''
-  const haikuJson = stripFences(haikuRaw)
-
-  // Step 2: Sonnet verifies Haiku's JSON against a short contract snippet (fast — only sees JSON + 3k chars)
-  const verifyMsg = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 2048,
-    system: VERIFY_PROMPT,
-    messages: [
-      {
-        role: 'user',
-        content: `Extracted JSON:\n${haikuJson}\n\nOriginal contract snippet (first 3000 chars):\n${text.slice(0, 3_000)}`,
-      },
-    ],
-  })
-
-  const verifyRaw = verifyMsg.content[0].type === 'text' ? verifyMsg.content[0].text : haikuJson
-  const finalJson = stripFences(verifyRaw)
+  const raw = refineMsg.content[0].type === 'text' ? refineMsg.content[0].text : ''
+  const finalJson = stripFences(raw)
 
   const parsed: ParsedContractData = JSON.parse(finalJson)
   return parsed
+}
+
+function extractBasicInfo(text: string, contractName: string): ParsedContractData {
+  const snippet = text.slice(0, 10_000).toLowerCase()
+
+  // Try to detect contract type
+  const typePatterns: [RegExp, string][] = [
+    [/\b(arrendamiento|alquiler|renta)\b/, 'Arrendamiento'],
+    [/\b(servicio|servicios profesionales)\b/, 'Servicios'],
+    [/\b(compraventa|compra[- ]?venta)\b/, 'Compraventa'],
+    [/\b(confidencialidad|nda|non[- ]?disclosure)\b/, 'NDA'],
+    [/\b(laboral|empleo|trabajo)\b/, 'Laboral'],
+    [/\b(préstamo|prestamo|crédito|credito)\b/, 'Préstamo'],
+    [/\b(licencia|uso de software)\b/, 'Licencia'],
+  ]
+  let type = 'General'
+  for (const [pat, label] of typePatterns) {
+    if (pat.test(snippet)) { type = label; break }
+  }
+
+  // Extract dates (DD/MM/YYYY, DD-MM-YYYY, YYYY-MM-DD, or written dates)
+  const dateRegex = /(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/g
+  const dates: Date[] = []
+  let m
+  while ((m = dateRegex.exec(text.slice(0, 10_000))) !== null) {
+    const [, a, b, y] = m
+    const d = new Date(`${y}-${b.padStart(2, '0')}-${a.padStart(2, '0')}`)
+    if (!isNaN(d.getTime())) dates.push(d)
+  }
+  dates.sort((a, b) => a.getTime() - b.getTime())
+  const startDate = dates.length > 0 ? dates[0].toISOString().split('T')[0] : null
+  const endDate = dates.length > 1 ? dates[dates.length - 1].toISOString().split('T')[0] : null
+
+  // Detect parties — look for patterns like "ENTRE: X ... Y: Z"
+  let partyA = ''
+  let partyB = ''
+  const entreMatch = text.match(/(?:entre|between)[:\s]+([^,\n]{3,80})/i)
+  if (entreMatch) partyA = entreMatch[1].trim()
+  const yMatch = text.match(/(?:\by\b|and)[:\s]+([^,\n]{3,80})/i)
+  if (yMatch && yMatch.index && entreMatch?.index && yMatch.index > entreMatch.index) {
+    partyB = yMatch[1].trim()
+  }
+
+  // Basic risk score heuristic
+  let riskScore = 5
+  const riskUp = [/penalidad/i, /indemniz/i, /exclusiv/i, /irrevocable/i, /sin límite/i, /responsabilidad ilimitada/i]
+  const riskDown = [/mediación/i, /arbitraje/i, /resolución de conflictos/i, /fuerza mayor/i, /seguro/i]
+  for (const r of riskUp) if (r.test(snippet)) riskScore = Math.min(10, riskScore + 1)
+  for (const r of riskDown) if (r.test(snippet)) riskScore = Math.max(1, riskScore - 1)
+
+  // Determine status
+  let status: 'active' | 'expired' | 'pending' = 'active'
+  if (endDate) {
+    const end = new Date(endDate)
+    if (end < new Date()) status = 'expired'
+  }
+
+  return {
+    name: contractName,
+    type,
+    party_a: partyA,
+    party_b: partyB,
+    start_date: startDate ?? undefined,
+    end_date: endDate ?? undefined,
+    renewal_type: 'none',
+    notice_days: 30,
+    risk_score: riskScore,
+    status,
+    ai_summary: 'Análisis básico (sin IA). Sube el contrato nuevamente para un análisis completo con Claude AI.',
+    improvement_tips: ['No se pudo completar el análisis con IA — intenta nuevamente más tarde para obtener recomendaciones detalladas.'],
+    obligations: [],
+  }
 }
 
 function buildAlerts(
@@ -233,7 +301,7 @@ export async function POST(request: NextRequest) {
 
       const arrayBuffer = await file.arrayBuffer()
       const buffer = Buffer.from(arrayBuffer)
-      contractText = await extractTextFromBuffer(buffer, file.type)
+      contractText = await extractTextFromBuffer(buffer, file.type, file.name)
 
       if (!contractText || contractText.trim().length < 20) {
         return NextResponse.json(
@@ -268,17 +336,16 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // ── Parse with Claude ─────────────────────────────────────────────────────
+    // ── Parse with Claude (with fallback) ──────────────────────────────────────
     let parsed: ParsedContractData
+    let aiFailed = false
     try {
       parsed = await parseContractWithClaude(contractText, contractName)
     } catch (claudeErr) {
       const errMsg = claudeErr instanceof Error ? claudeErr.message : String(claudeErr)
-      console.error('Claude parsing error:', errMsg)
-      return NextResponse.json(
-        { error: 'Failed to parse contract with AI' },
-        { status: 502 }
-      )
+      console.error('Claude parsing error — using basic fallback:', errMsg)
+      aiFailed = true
+      parsed = extractBasicInfo(contractText, contractName)
     }
 
     // ── Insert contract ───────────────────────────────────────────────────────
@@ -360,7 +427,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { contract, obligations, alerts },
+      { contract, obligations, alerts, ...(aiFailed && { warning: 'Claude AI no disponible — se guardó con análisis básico' }) },
       { status: 201 }
     )
   } catch (err) {

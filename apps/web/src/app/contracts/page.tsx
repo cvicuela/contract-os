@@ -150,18 +150,23 @@ export default function ContractsPage() {
         body = JSON.stringify({ name: contractName, text: contractText });
       }
 
-      const res = await fetch("/api/contracts/upload", {
-        method: "POST",
-        headers,
-        body,
-      });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error ?? `Upload failed (${res.status})`);
+      let res: Response | undefined;
+      for (let attempt = 0; attempt < 2; attempt++) {
+        res = await fetch("/api/contracts/upload", {
+          method: "POST",
+          headers,
+          body,
+        });
+        if (res.ok || res.status < 500) break;
+        // Retry once on 5xx / gateway timeout
       }
 
-      const data = await res.json();
+      if (!res!.ok) {
+        const err = await res!.json().catch(() => ({}));
+        throw new Error(err.error ?? "No se pudo procesar el contrato. Intenta de nuevo.");
+      }
+
+      const data = await res!.json();
       setUploadSuccess(data.contract ?? data);
       fetchContracts();
     } catch (e) {

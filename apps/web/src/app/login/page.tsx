@@ -28,7 +28,7 @@ const PLANS = [
     description: "For freelancers and small teams managing contracts daily.",
     features: [
       "Everything in Free Trial",
-      "25 contracts / month",
+      "10 contracts / month",
       "Priority AI processing",
       "PDF export & print reports",
       "Google Drive sync",
@@ -42,10 +42,10 @@ const PLANS = [
     key: 'professional' as const,
     highlight: false,
     badge: false,
-    description: "Unlimited contracts for growing businesses and legal teams.",
+    description: "25 contracts for growing businesses and legal teams.",
     features: [
       "Everything in Starter",
-      "Unlimited contracts",
+      "25 contracts",
       "Team members (up to 5)",
       "Custom clause library",
       "API access",
@@ -91,12 +91,25 @@ export default function LoginPage() {
     router.push("/")
   }
 
-  const handlePlanCta = (action: string) => {
+  const handlePlanCta = async (action: string, paypalPlanId?: string) => {
     if (action === "signup") {
       signIn("google", { callbackUrl: "/" })
-    } else if (action === "paypal") {
-      // PayPal subscription integration — coming soon
-      signIn("google", { callbackUrl: "/" })
+    } else if (action === "paypal" && paypalPlanId) {
+      try {
+        const res = await fetch('/api/paypal/create-subscription', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ planId: paypalPlanId }),
+        })
+        const data = await res.json()
+        if (data.approvalUrl) {
+          window.location.href = data.approvalUrl
+        } else {
+          signIn("google", { callbackUrl: "/" })
+        }
+      } catch {
+        signIn("google", { callbackUrl: "/" })
+      }
     }
   }
 
@@ -259,7 +272,7 @@ export default function LoginPage() {
               </ul>
 
               <button
-                onClick={() => handlePlanCta(plan.ctaAction)}
+                onClick={() => handlePlanCta(plan.ctaAction, plan.paypalPlanId)}
                 className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all ${
                   plan.highlight
                     ? "bg-white text-indigo-700 hover:bg-indigo-50 shadow"

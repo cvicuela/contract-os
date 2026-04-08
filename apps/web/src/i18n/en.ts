@@ -334,8 +334,8 @@ const en = {
     pricingSubtitle: 'Start free. Upgrade when you\'re ready.',
     plans: {
       trial: { name: 'Free Trial', price: '$0', period: '30 days', contracts: '3 contracts', cta: 'Get Started' },
-      starter: { name: 'Starter', price: '$29', period: 'per month', contracts: '25 contracts', cta: 'Get Started' },
-      professional: { name: 'Professional', price: '$79', period: 'per month', contracts: 'Unlimited contracts', cta: 'Go Professional' },
+      starter: { name: 'Starter', price: '$29', period: 'per month', contracts: '10 contracts', cta: 'Get Started' },
+      professional: { name: 'Professional', price: '$79', period: 'per month', contracts: '25 contracts', cta: 'Go Professional' },
     },
     mostPopular: 'Most Popular',
     billingNote: 'Billed via PayPal — cancel anytime',

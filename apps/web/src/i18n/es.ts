@@ -336,8 +336,8 @@ const es: Translations = {
     pricingSubtitle: 'Empieza gratis. Mejora cuando est\u00e9s listo.',
     plans: {
       trial: { name: 'Prueba Gratuita', price: '$0', period: '30 d\u00edas', contracts: '3 contratos', cta: 'Comenzar' },
-      starter: { name: 'Inicial', price: '$29', period: 'por mes', contracts: '25 contratos', cta: 'Comenzar' },
-      professional: { name: 'Profesional', price: '$79', period: 'por mes', contracts: 'Contratos ilimitados', cta: 'Ir a Profesional' },
+      starter: { name: 'Inicial', price: '$29', period: 'por mes', contracts: '10 contratos', cta: 'Comenzar' },
+      professional: { name: 'Profesional', price: '$79', period: 'por mes', contracts: '25 contratos', cta: 'Ir a Profesional' },
     },
     mostPopular: 'M\u00e1s Popular',
     billingNote: 'Facturado v\u00eda PayPal — cancela cuando quieras',

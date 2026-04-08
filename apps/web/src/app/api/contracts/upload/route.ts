@@ -342,10 +342,14 @@ export async function POST(request: NextRequest) {
     try {
       parsed = await parseContractWithClaude(contractText, contractName)
     } catch (claudeErr) {
-      const errMsg = claudeErr instanceof Error ? claudeErr.message : String(claudeErr)
+      const errMsg = claudeErr instanceof Error
+        ? `${claudeErr.name}: ${claudeErr.message}`
+        : String(claudeErr)
       console.error('Claude parsing error — using basic fallback:', errMsg)
+      console.error('Claude error stack:', claudeErr instanceof Error ? claudeErr.stack : 'no stack')
       aiFailed = true
       parsed = extractBasicInfo(contractText, contractName)
+      parsed.ai_summary = `Análisis básico (sin IA). Error: ${errMsg.slice(0, 200)}. Sube el contrato nuevamente.`
     }
 
     // ── Insert contract ───────────────────────────────────────────────────────

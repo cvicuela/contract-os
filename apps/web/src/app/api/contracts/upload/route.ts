@@ -1,6 +1,7 @@
+export const runtime = 'nodejs'
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import Anthropic from '@anthropic-ai/sdk'
 
 const SUPABASE_URL = process.env.SUPABASE_URL!
 const SUPABASE_KEY = process.env.SUPABASE_KEY!
@@ -108,6 +109,7 @@ async function parseContractWithClaude(
   text: string,
   contractName: string
 ): Promise<ParsedContractData> {
+  const { default: Anthropic } = await import('@anthropic-ai/sdk')
   const anthropic = new Anthropic({ apiKey: CLAUDE_API_KEY })
 
   // Step 1: Haiku extracts the full JSON (fast)

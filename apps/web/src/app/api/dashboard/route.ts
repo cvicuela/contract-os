@@ -1,3 +1,5 @@
+export const runtime = 'nodejs'
+
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
@@ -43,11 +45,13 @@ export async function GET() {
       overdue_obligations: overdueObligationsResult.count ?? 0,
     }
 
-    return NextResponse.json({
+    const res = NextResponse.json({
       stats,
       contracts: contractsResult.data ?? [],
       alerts: alertsResult.data ?? [],
     })
+    res.headers.set('Cache-Control', 'no-store')
+    return res
   } catch (err) {
     console.error('Unexpected error in GET /api/dashboard:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

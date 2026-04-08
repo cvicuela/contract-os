@@ -1,3 +1,5 @@
+export const runtime = 'nodejs'
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
@@ -54,10 +56,12 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    return NextResponse.json({
+    const res = NextResponse.json({
       contracts: (data as Contract[]) ?? [],
       total: count ?? 0,
     })
+    res.headers.set('Cache-Control', 'no-store')
+    return res
   } catch (err) {
     console.error('Unexpected error in GET /api/contracts:', err)
     return NextResponse.json(

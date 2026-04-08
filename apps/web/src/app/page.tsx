@@ -111,8 +111,6 @@ export default function DashboardPage() {
   const [loadingContracts, setLoadingContracts] = useState(true);
   const [loadingAlerts, setLoadingAlerts] = useState(true);
   const [statsError, setStatsError] = useState<string | null>(null);
-  const [contractsError, setContractsError] = useState<string | null>(null);
-  const [alertsError, setAlertsError] = useState<string | null>(null);
   const [runningChecks, setRunningChecks] = useState(false);
   const [checksResult, setChecksResult] = useState<string | null>(null);
 
@@ -383,9 +381,9 @@ export default function DashboardPage() {
             <tbody className="divide-y divide-gray-50">
               {loadingContracts ? (
                 [...Array(5)].map((_, i) => <SkeletonRow key={i} />)
-              ) : contractsError ? (
+              ) : statsError ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-6 text-center text-sm text-red-600">{contractsError}</td>
+                  <td colSpan={7} className="px-4 py-6 text-center text-sm text-red-600">{statsError}</td>
                 </tr>
               ) : contracts.length === 0 ? (
                 <tr>
@@ -447,8 +445,6 @@ export default function DashboardPage() {
             [...Array(3)].map((_, i) => (
               <div key={i} className="h-14 bg-gray-50 rounded-lg animate-pulse" />
             ))
-          ) : alertsError ? (
-            <p className="text-sm text-red-600 px-2">{alertsError}</p>
           ) : alerts.filter((a) => a.status !== 'dismissed').length === 0 ? (
             <div className="py-8 text-center text-sm text-gray-400">No active alerts</div>
           ) : (

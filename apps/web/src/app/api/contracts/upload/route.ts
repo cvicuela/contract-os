@@ -92,8 +92,7 @@ Rules:
 
 async function extractTextFromBuffer(buffer: Buffer, mimeType: string): Promise<string> {
   if (mimeType === 'application/pdf') {
-    // Dynamically import to avoid Next.js bundler issues with pdfjs-dist
-    const { PDFParse } = await import('pdf-parse') as unknown as { PDFParse: new (opts: { data: Uint8Array }) => { getText(): Promise<{ text: string }> } }
+    const { PDFParse } = await import('pdf-parse')
     const parser = new PDFParse({ data: new Uint8Array(buffer) })
     const result = await parser.getText()
     return result.text.replace(/\s{2,}/g, ' ').trim()

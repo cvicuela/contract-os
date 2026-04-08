@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Modal from '../Modal';
+import { useI18n } from '@/i18n/context';
 
 interface Obligation {
   id: string;
@@ -36,6 +37,7 @@ function getRiskBadge(risk: string): string {
 }
 
 export default function ObligationsModal({ isOpen, onClose }: Props) {
+  const { t, dateLocale } = useI18n();
   const [obligations, setObligations] = useState<Obligation[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,7 +53,7 @@ export default function ObligationsModal({ isOpen, onClose }: Props) {
       .then((data) => {
         setObligations(Array.isArray(data) ? data : (data.obligations ?? []));
       })
-      .catch(() => setError('Failed to load overdue obligations'))
+      .catch(() => setError(t.modals.obligations.failedToLoad))
       .finally(() => setLoading(false));
   }, [isOpen]);
 
@@ -79,11 +81,11 @@ export default function ObligationsModal({ isOpen, onClose }: Props) {
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Overdue Obligations"
+      title={t.modals.obligations.title}
       subtitle={
         loading
-          ? 'Loading...'
-          : `${obligations.length} overdue obligation${obligations.length !== 1 ? 's' : ''}`
+          ? t.loading
+          : t.modals.obligations.subtitle
       }
       printTitle="ContractOS — Overdue Obligations Report"
     >
@@ -101,14 +103,14 @@ export default function ObligationsModal({ isOpen, onClose }: Props) {
             <svg className="w-10 h-10 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <p className="text-sm text-gray-500">No overdue obligations</p>
+            <p className="text-sm text-gray-500">{t.modals.obligations.noOverdue}</p>
           </div>
         ) : (
           <div className="overflow-x-auto rounded-lg border border-gray-100">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50">
-                  {['Description', 'Contract', 'Due Date', 'Overdue By', 'Risk Level', 'Action'].map((h) => (
+                  {[t.table.description, t.table.name, t.table.nextDue, t.table.daysOverdue, t.table.riskLevel, t.table.actions].map((h) => (
                     <th
                       key={h}
                       className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wide"
@@ -140,7 +142,7 @@ export default function ObligationsModal({ isOpen, onClose }: Props) {
                         )}
                       </td>
                       <td className="px-4 py-3 text-gray-600 whitespace-nowrap text-xs">
-                        {new Date(o.next_due_date).toLocaleDateString('en-US', {
+                        {new Date(o.next_due_date).toLocaleDateString(dateLocale, {
                           month: 'short',
                           day: 'numeric',
                           year: 'numeric',
@@ -177,7 +179,7 @@ export default function ObligationsModal({ isOpen, onClose }: Props) {
                               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                               </svg>
-                              Complete
+                              {t.modals.obligations.markComplete}
                             </>
                           )}
                         </button>

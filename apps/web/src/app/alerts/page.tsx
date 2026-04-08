@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import SnoozeButton from "@/components/SnoozeButton";
+import { useI18n } from '@/i18n/context';
 
 interface Alert {
   id: string;
@@ -72,6 +73,7 @@ function SkeletonCard() {
 }
 
 export default function AlertsPage() {
+  const { t, dateLocale } = useI18n();
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -83,7 +85,7 @@ export default function AlertsPage() {
     fetch("/api/alerts")
       .then((r) => r.json())
       .then((data) => setAlerts(Array.isArray(data) ? data : data.alerts ?? []))
-      .catch(() => setError("Failed to load alerts"))
+      .catch(() => setError(t.alertsPage.failedToLoad))
       .finally(() => setLoading(false));
   };
 
@@ -137,19 +139,27 @@ export default function AlertsPage() {
       {/* Header */}
       <div>
         <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight flex items-center gap-2.5">
-          Alerts
+          {t.alertsPage.title}
           {unreadCount > 0 && (
             <span className="inline-flex items-center justify-center min-w-[1.5rem] h-6 px-1.5 rounded-full bg-red-500 text-white text-xs font-semibold">
               {unreadCount}
             </span>
           )}
         </h1>
-        <p className="text-sm text-gray-500 mt-1">Monitor contract deadlines and risks</p>
+        <p className="text-sm text-gray-500 mt-1">{t.alertsPage.subtitle}</p>
       </div>
 
       {/* Filters */}
       <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1 w-full sm:w-fit overflow-x-auto">
-        {FILTERS.map((f) => (
+        {FILTERS.map((f) => {
+          const filterLabels: Record<Filter, string> = {
+            All: t.alertsPage.filterAll,
+            Unread: t.alertsPage.filterUnread,
+            Critical: t.alertsPage.filterCritical,
+            Warning: t.alertsPage.filterWarning,
+            Snoozed: t.alertsPage.filterSnoozed,
+          };
+          return (
           <button
             key={f}
             onClick={() => setActiveFilter(f)}
@@ -159,7 +169,7 @@ export default function AlertsPage() {
                 : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
             }`}
           >
-            {f}
+            {filterLabels[f]}
             {f === "Unread" && unreadCount > 0 && (
               <span className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-red-500 text-white text-[10px] font-bold">
                 {unreadCount}
@@ -171,7 +181,8 @@ export default function AlertsPage() {
               </span>
             )}
           </button>
-        ))}
+          );
+        })}
       </div>
 
       {/* Error */}
@@ -192,12 +203,12 @@ export default function AlertsPage() {
               </svg>
             </div>
             <h3 className="text-sm font-medium text-gray-700">
-              {activeFilter === "Snoozed" ? "No snoozed alerts" : "No alerts"}
+              {activeFilter === "Snoozed" ? t.alertsPage.noSnoozed : t.alertsPage.noAlerts}
             </h3>
             <p className="text-xs text-gray-400 mt-1">
-              {activeFilter === "All" ? "All caught up — no active alerts" :
-               activeFilter === "Snoozed" ? "Nothing is snoozed right now" :
-               `No ${activeFilter.toLowerCase()} alerts`}
+              {activeFilter === "All" ? t.alertsPage.allCaughtUp :
+               activeFilter === "Snoozed" ? t.alertsPage.nothingSnoozed :
+               t.alertsPage.noFiltered.replace('{filter}', activeFilter.toLowerCase())}
             </p>
           </div>
         ) : (
@@ -213,20 +224,20 @@ export default function AlertsPage() {
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-start gap-2 mb-1">
                   <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${getSeverityBadge(alert.severity)}`}>
-                    {alert.severity.charAt(0).toUpperCase() + alert.severity.slice(1)}
+                    {t.severity[alert.severity as keyof typeof t.severity] ?? (alert.severity.charAt(0).toUpperCase() + alert.severity.slice(1))}
                   </span>
                   {alert.is_snoozed && (
                     <span className="inline-flex items-center gap-1 text-xs font-medium text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full">
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      Snoozed until {new Date(alert.snoozed_until!).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                      {t.alertsPage.snoozedUntil.replace('{date}', new Date(alert.snoozed_until!).toLocaleDateString(dateLocale, { month: "short", day: "numeric" }))}
                     </span>
                   )}
                   {alert.status === "unread" && !alert.is_snoozed && (
                     <span className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600">
                       <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 inline-block" />
-                      New
+                      {t.alertsPage.new}
                     </span>
                   )}
                 </div>
@@ -240,7 +251,7 @@ export default function AlertsPage() {
                   <span className="text-xs text-gray-400">
                     Triggers:{" "}
                     <span className="text-gray-600">
-                      {new Date(alert.trigger_date).toLocaleDateString("en-US", {
+                      {new Date(alert.trigger_date).toLocaleDateString(dateLocale, {
                         month: "long", day: "numeric", year: "numeric",
                       })}
                     </span>
@@ -249,7 +260,7 @@ export default function AlertsPage() {
                     <span className="text-xs text-gray-400">
                       Deadline:{" "}
                       <span className="text-gray-600 font-medium">
-                        {new Date(alert.deadline).toLocaleDateString("en-US", {
+                        {new Date(alert.deadline).toLocaleDateString(dateLocale, {
                           month: "short", day: "numeric", year: "numeric",
                         })}
                       </span>
@@ -277,7 +288,7 @@ export default function AlertsPage() {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                       </svg>
-                    ) : "Mark Read"}
+                    ) : t.alertsPage.markRead}
                   </button>
                 )}
                 <button
@@ -285,7 +296,7 @@ export default function AlertsPage() {
                   disabled={actionLoading === alert.id}
                   className="text-xs font-medium text-red-500 hover:text-red-700 px-3 py-1.5 rounded-lg border border-red-200 hover:bg-red-50 disabled:opacity-50 transition-colors"
                 >
-                  Dismiss
+                  {t.alertsPage.dismiss}
                 </button>
               </div>
             </div>

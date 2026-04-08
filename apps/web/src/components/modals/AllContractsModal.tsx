@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import Modal from '../Modal';
+import { useI18n } from '@/i18n/context';
 
 interface Contract {
   id: string;
@@ -28,8 +29,8 @@ interface Props {
 type SortKey = keyof Contract;
 type SortDir = 'asc' | 'desc';
 
-function formatDate(d: string) {
-  return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+function formatDate(d: string, locale = 'en-US') {
+  return new Date(d).toLocaleDateString(locale, { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 function getRiskPill(score: number) {
@@ -77,21 +78,22 @@ function exportCSV(contracts: Contract[]) {
   URL.revokeObjectURL(url);
 }
 
-const COLUMNS: { key: SortKey; label: string }[] = [
-  { key: 'name', label: 'Name' },
-  { key: 'type', label: 'Type' },
-  { key: 'party_a', label: 'Party A' },
-  { key: 'party_b', label: 'Party B' },
-  { key: 'start_date', label: 'Start Date' },
-  { key: 'end_date', label: 'End Date' },
-  { key: 'renewal_type', label: 'Renewal' },
-  { key: 'notice_days', label: 'Notice' },
-  { key: 'risk_score', label: 'Risk' },
-  { key: 'status', label: 'Status' },
-  { key: 'created_at', label: 'Created' },
+const COLUMN_KEYS: { key: SortKey; tKey: string }[] = [
+  { key: 'name', tKey: 'name' },
+  { key: 'type', tKey: 'type' },
+  { key: 'party_a', tKey: 'partyA' },
+  { key: 'party_b', tKey: 'partyB' },
+  { key: 'start_date', tKey: 'startDate' },
+  { key: 'end_date', tKey: 'endDate' },
+  { key: 'renewal_type', tKey: 'duration' },
+  { key: 'notice_days', tKey: 'daysLeft' },
+  { key: 'risk_score', tKey: 'risk' },
+  { key: 'status', tKey: 'status' },
+  { key: 'created_at', tKey: 'createdAt' },
 ];
 
 export default function AllContractsModal({ isOpen, onClose }: Props) {
+  const { t, dateLocale } = useI18n();
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -110,7 +112,7 @@ export default function AllContractsModal({ isOpen, onClose }: Props) {
       .then((data) => {
         setContracts(Array.isArray(data) ? data : (data.contracts ?? []));
       })
-      .catch(() => setError('Failed to load contracts'))
+      .catch(() => setError(t.modals.allContracts.failedToLoad))
       .finally(() => setLoading(false));
   }, [isOpen]);
 
@@ -158,7 +160,7 @@ export default function AllContractsModal({ isOpen, onClose }: Props) {
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="All Contracts"
+      title={t.modals.allContracts.title}
       subtitle={
         loading
           ? 'Loading...'
@@ -194,7 +196,7 @@ export default function AllContractsModal({ isOpen, onClose }: Props) {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
-            Export CSV
+            {t.modals.allContracts.downloadCSV}
           </button>
         </div>
 
@@ -213,7 +215,7 @@ export default function AllContractsModal({ isOpen, onClose }: Props) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
             <p className="text-sm text-gray-500">
-              {search ? 'No contracts match your search' : 'No contracts yet'}
+              {t.modals.allContracts.noContracts}
             </p>
           </div>
         ) : (
@@ -221,14 +223,14 @@ export default function AllContractsModal({ isOpen, onClose }: Props) {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50">
-                  {COLUMNS.map((col) => (
+                  {COLUMN_KEYS.map((col) => (
                     <th
                       key={col.key}
                       onClick={() => handleSort(col.key)}
                       className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wide cursor-pointer hover:text-gray-700 select-none whitespace-nowrap"
                     >
                       <span className="inline-flex items-center">
-                        {col.label}
+                        {(t.table as Record<string, string>)[col.tKey]}
                         <SortIcon colKey={col.key} />
                       </span>
                     </th>
@@ -248,8 +250,8 @@ export default function AllContractsModal({ isOpen, onClose }: Props) {
                     <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{c.type}</td>
                     <td className="px-4 py-3 text-gray-500 max-w-[120px] truncate">{c.party_a}</td>
                     <td className="px-4 py-3 text-gray-500 max-w-[120px] truncate">{c.party_b}</td>
-                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{formatDate(c.start_date)}</td>
-                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{formatDate(c.end_date)}</td>
+                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{formatDate(c.start_date, dateLocale)}</td>
+                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{formatDate(c.end_date, dateLocale)}</td>
                     <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{c.renewal_type}</td>
                     <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{c.notice_days}d</td>
                     <td className="px-4 py-3">
@@ -262,7 +264,7 @@ export default function AllContractsModal({ isOpen, onClose }: Props) {
                         {c.status.charAt(0).toUpperCase() + c.status.slice(1)}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-gray-400 whitespace-nowrap text-xs">{formatDate(c.created_at)}</td>
+                    <td className="px-4 py-3 text-gray-400 whitespace-nowrap text-xs">{formatDate(c.created_at, dateLocale)}</td>
                   </tr>
                 ))}
               </tbody>

@@ -1,0 +1,356 @@
+import type { Translations } from './en'
+
+const es: Translations = {
+  // Common
+  brand: 'ContractOS',
+  poweredBy: 'Impulsado por Claude AI',
+  loading: 'Cargando...',
+  error: 'Error',
+  close: 'Cerrar',
+  save: 'Guardar',
+  cancel: 'Cancelar',
+  delete: 'Eliminar',
+  view: 'Ver',
+  back: 'Volver',
+  search: 'Buscar',
+  download: 'Descargar',
+  print: 'Imprimir',
+  noResults: 'Sin resultados',
+  showingXofY: 'Mostrando {x} de {y}',
+
+  // Navigation
+  nav: {
+    overview: 'General',
+    management: 'Gesti\u00f3n',
+    dashboard: 'Panel',
+    contracts: 'Contratos',
+    alerts: 'Alertas',
+    calendar: 'Calendario',
+    newContract: 'Nuevo Contrato',
+    closeMenu: 'Cerrar men\u00fa',
+    openMenu: 'Abrir men\u00fa',
+  },
+
+  // Dashboard
+  dashboard: {
+    title: 'Panel',
+    greeting: {
+      morning: 'Buenos d\u00edas',
+      afternoon: 'Buenas tardes',
+      evening: 'Buenas noches',
+    },
+    subtitle: 'resumen de tu portafolio de contratos',
+    totalContracts: 'Total Contratos',
+    activeContracts: 'Contratos Activos',
+    expiringSoon: 'Por Vencer',
+    highRisk: 'Alto Riesgo',
+    pendingAlerts: 'Alertas Pendientes',
+    overdueObligations: 'Obligaciones Vencidas',
+    runChecks: 'Ejecutar Chequeos',
+    running: 'Ejecutando...',
+    checksComplete: 'Chequeo completo: {alerts} nueva(s) alerta(s) creada(s), {obligations} obligaci\u00f3n(es) marcada(s) como vencida(s).',
+    checksFailed: 'El chequeo fall\u00f3. Int\u00e9ntalo de nuevo.',
+    recentContracts: 'Contratos Recientes',
+    viewAll: 'Ver todos',
+    noContracts: 'A\u00fan no hay contratos',
+    activeAlerts: 'Alertas Activas',
+    noActiveAlerts: 'No hay alertas activas',
+    dismiss: 'Descartar',
+    failedToLoad: 'Error al cargar el panel',
+  },
+
+  // Charts
+  charts: {
+    contractsByStatus: 'Contratos por Estado',
+    riskDistribution: 'Distribuci\u00f3n de Riesgo',
+    contractsByType: 'Contratos por Tipo',
+    expiryTimeline: 'Contratos por Vencer (Pr\u00f3ximos 12 Meses)',
+    totalValue: 'Valor Total del Contrato (Top 10)',
+    pricePerUnit: 'Precio por {unit} (Top 10)',
+    uploadToSee: 'Sube contratos para ver las estad\u00edsticas',
+    contracts: 'contrato(s)',
+  },
+
+  // Contract Timeline Chart
+  contractTimeline: {
+    title: 'L\u00ednea de Tiempo del Contrato',
+    value: 'Valor Acumulado',
+    priceUnit: 'Precio/Unidad',
+    riskOverTime: 'Riesgo en el Tiempo',
+    escalation: 'Escalaci\u00f3n anual',
+    obligationDue: 'Obligaci\u00f3n pendiente',
+    today: 'Hoy',
+  },
+
+  // Table headers
+  table: {
+    name: 'Nombre',
+    type: 'Tipo',
+    parties: 'Partes',
+    partyA: 'Parte A',
+    partyB: 'Parte B',
+    startDate: 'Fecha Inicio',
+    endDate: 'Fecha Fin',
+    duration: 'Duraci\u00f3n',
+    risk: 'Riesgo',
+    riskScore: 'Puntuaci\u00f3n de Riesgo',
+    status: 'Estado',
+    daysLeft: 'D\u00edas Restantes',
+    actions: 'Acciones',
+    createdAt: 'Fecha de Creaci\u00f3n',
+    description: 'Descripci\u00f3n',
+    frequency: 'Frecuencia',
+    nextDue: 'Pr\u00f3ximo Vencimiento',
+    riskLevel: 'Nivel de Riesgo',
+    daysOverdue: 'D\u00edas Vencidos',
+    aiSummary: 'Resumen IA',
+  },
+
+  // Statuses
+  status: {
+    active: 'Activo',
+    expired: 'Vencido',
+    expiring: 'Por Vencer',
+    pending: 'Pendiente',
+    cancelled: 'Cancelado',
+    draft: 'Borrador',
+    completed: 'Completado',
+    overdue: 'Vencido',
+  },
+
+  // Risk
+  risk: {
+    low: 'Bajo',
+    medium: 'Medio',
+    high: 'Alto',
+    critical: 'Cr\u00edtico',
+  },
+
+  // Severity
+  severity: {
+    info: 'Info',
+    warning: 'Advertencia',
+    critical: 'Cr\u00edtico',
+  },
+
+  // Days
+  days: {
+    left: '{n}d',
+    ago: 'hace {n}d',
+    leftFull: '{n}d restantes',
+    overdue: '{n}d vencido',
+    expiresToday: 'Vence hoy',
+  },
+
+  // Contracts page
+  contractsPage: {
+    title: 'Contratos',
+    subtitle: 'Gestiona y analiza tus contratos',
+    uploadContract: 'Subir Contrato',
+    searchPlaceholder: 'Buscar contratos...',
+    filterAll: 'Todos',
+    filterActive: 'Activos',
+    filterExpiring: 'Por Vencer',
+    filterHighRisk: 'Alto Riesgo',
+    filterExpired: 'Vencidos',
+    noMatch: 'Ning\u00fan contrato coincide con tu b\u00fasqueda',
+    noContracts: 'A\u00fan no hay contratos — sube uno para empezar',
+    showingContracts: 'Mostrando {x} de {y} contratos',
+  },
+
+  // Upload
+  upload: {
+    title: 'Subir Contrato',
+    contractName: 'Nombre del Contrato',
+    pasteText: 'Pegar Texto',
+    uploadFile: 'Subir Archivo',
+    contractText: 'Texto del Contrato',
+    pastePlaceholder: 'Pega el texto completo del contrato aqu\u00ed...',
+    dropFile: 'Arrastra un archivo aqu\u00ed, o busca',
+    fileTypes: 'PDF, DOC, DOCX, TXT',
+    analyzing: 'Claude est\u00e1 analizando...',
+    analyzeButton: 'Analizar con Claude AI',
+    enterName: 'Por favor ingresa un nombre para el contrato.',
+    enterText: 'Por favor pega el texto del contrato.',
+    selectFile: 'Por favor selecciona un archivo.',
+    success: 'Contrato Analizado Exitosamente',
+    viewContract: 'Ver Contrato',
+    uploadAnother: 'Subir Otro',
+    failed: 'Error al subir',
+  },
+
+  // Contract detail
+  contractDetail: {
+    backToContracts: 'Volver a Contratos',
+    addToCalendar: 'Agregar al Calendario',
+    addExpiryToCalendar: 'Agregar vencimiento a Google Calendar',
+    contractDetails: 'Detalles del Contrato',
+    renewalType: 'Tipo de Renovaci\u00f3n',
+    noticeDays: 'D\u00edas de Aviso',
+    daysNotice: '{n} d\u00edas',
+    added: 'Agregado {date}',
+    riskLabel: 'Riesgo: {score}/10 — {level}',
+    aiSummary: 'Resumen IA',
+    improvementTitle: 'C\u00f3mo mejorar este contrato a 10/10',
+    improvement: 'Mejora {n}',
+    obligations: 'Obligaciones del Contrato',
+    noObligations: 'A\u00fan no hay obligaciones',
+    markComplete: 'Marcar Completado',
+    alertsOnContract: 'Alertas de este contrato',
+    noAlerts: 'Sin alertas',
+    confirmDelete: '\u00bfEst\u00e1s seguro de que quieres eliminar este contrato? Esta acci\u00f3n no se puede deshacer.',
+    notFound: 'Contrato no encontrado',
+    failedToLoad: 'Error al cargar el contrato',
+  },
+
+  // Alerts page
+  alertsPage: {
+    title: 'Alertas',
+    subtitle: 'Monitorea plazos y riesgos de contratos',
+    filterAll: 'Todas',
+    filterUnread: 'No Le\u00eddas',
+    filterCritical: 'Cr\u00edticas',
+    filterWarning: 'Advertencias',
+    filterSnoozed: 'Pospuestas',
+    new: 'Nueva',
+    snoozedUntil: 'Pospuesta hasta {date}',
+    contract: 'Contrato: {name}',
+    triggers: 'Se activa: {date}',
+    deadline: 'Fecha l\u00edmite: {date}',
+    markRead: 'Marcar Le\u00edda',
+    dismiss: 'Descartar',
+    noAlerts: 'Sin alertas',
+    noSnoozed: 'Sin alertas pospuestas',
+    allCaughtUp: 'Todo al d\u00eda — no hay alertas activas',
+    nothingSnoozed: 'No hay nada pospuesto ahora',
+    noFiltered: 'No hay alertas de tipo {filter}',
+    failedToLoad: 'Error al cargar alertas',
+  },
+
+  // Calendar
+  calendarPage: {
+    title: 'Calendario',
+    subtitle: 'Plazos de contratos, obligaciones y alertas de un vistazo',
+    expiry: 'Vencimiento',
+    noticeDeadline: 'Plazo de Aviso',
+    obligation: 'Obligaci\u00f3n',
+    alert: 'Alerta',
+    noEvents: 'Sin eventos',
+    eventsThisMonth: '{month} — {count} evento(s)',
+    noEventsThisMonth: 'Sin eventos este mes',
+    addToGoogleCalendar: 'Agregar a Google Calendar',
+    viewContract: 'Ver contrato',
+    loadingEvents: 'Cargando eventos...',
+    weekDays: ['Dom', 'Lun', 'Mar', 'Mi\u00e9', 'Jue', 'Vie', 'S\u00e1b'],
+    weekDaysShort: ['D', 'L', 'M', 'M', 'J', 'V', 'S'],
+    months: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
+  },
+
+  // Snooze
+  snooze: {
+    snooze: 'Posponer',
+    snoozeUntil: 'Posponer hasta',
+    deadline: 'Fecha l\u00edmite: {date}',
+    snoozedUntil: 'Pospuesto hasta {date}',
+    tomorrow: 'Ma\u00f1ana',
+    in3Days: 'En 3 d\u00edas',
+    in1Week: 'En 1 semana',
+    in2Weeks: 'En 2 semanas',
+    dayBeforeDeadline: 'D\u00eda antes del l\u00edmite ({date})',
+  },
+
+  // User menu
+  userMenu: {
+    demoMode: 'Modo Demo',
+    signUpFree: 'Reg\u00edstrate gratis',
+    unknownUser: 'Usuario desconocido',
+    freeTrial: 'Prueba Gratuita',
+    upgradePlan: 'Mejorar plan',
+    signOut: 'Cerrar sesi\u00f3n',
+    openMenu: 'Abrir men\u00fa de usuario',
+  },
+
+  // Modals
+  modals: {
+    allContracts: {
+      title: 'Todos los Contratos',
+      total: 'Total: {n} contratos',
+      downloadCSV: 'Descargar CSV',
+      sortHint: 'Haz clic en los encabezados para ordenar',
+      noContracts: 'No se encontraron contratos',
+      failedToLoad: 'Error al cargar contratos',
+    },
+    expiring: {
+      title: 'Por Vencer',
+      subtitle: 'Contratos que vencen en los pr\u00f3ximos 90 d\u00edas',
+      downloadCSV: 'Descargar CSV',
+      noExpiring: 'No hay contratos por vencer',
+      failedToLoad: 'Error al cargar contratos',
+    },
+    highRisk: {
+      title: 'Contratos de Alto Riesgo',
+      subtitle: 'Contratos con puntuaci\u00f3n de riesgo de 7 o m\u00e1s',
+      downloadCSV: 'Descargar CSV',
+      noHighRisk: 'No hay contratos de alto riesgo',
+      failedToLoad: 'Error al cargar contratos',
+    },
+    alerts: {
+      title: 'Todas las Alertas',
+      total: 'Total: {n} alertas pendientes',
+      markRead: 'Marcar Le\u00edda',
+      dismiss: 'Descartar',
+      noAlerts: 'No hay alertas pendientes',
+      failedToLoad: 'Error al cargar alertas',
+    },
+    obligations: {
+      title: 'Obligaciones Vencidas',
+      subtitle: 'Marca las obligaciones como completadas',
+      markComplete: 'Marcar Completado',
+      noOverdue: 'No hay obligaciones vencidas',
+      failedToLoad: 'Error al cargar obligaciones vencidas',
+    },
+  },
+
+  // Login page
+  login: {
+    liveDemo: 'Demo en Vivo',
+    signIn: 'Iniciar Sesi\u00f3n',
+    heroTagline: 'Impulsado por Claude AI — la IA m\u00e1s capaz para an\u00e1lisis de documentos',
+    heroTitle: 'Tus contratos, finalmente bajo control',
+    heroDescription: 'Sube cualquier contrato y obt\u00e9n an\u00e1lisis instant\u00e1neo con IA — puntuaci\u00f3n de riesgo, seguimiento de obligaciones, alertas de vencimiento y un plan de acci\u00f3n exacto para llevarlo a 10/10.',
+    startFreeTrial: 'Comenzar Prueba Gratuita',
+    tryLiveDemo: 'Probar Demo',
+    loadingDemo: 'Cargando demo...',
+    trialNote: 'Prueba gratuita \u00b7 Sin tarjeta de cr\u00e9dito \u00b7 3 contratos incluidos',
+    featuresTitle: 'Todo lo que necesitas para gestionar contratos',
+    featuresSubtitle: 'De la subida al an\u00e1lisis en menos de 30 segundos.',
+    features: {
+      aiAnalysis: { title: 'An\u00e1lisis de Contratos con IA', desc: 'Claude AI lee tu contrato, extrae t\u00e9rminos clave, identifica las partes y resume todo en segundos.' },
+      riskScoring: { title: 'Puntuaci\u00f3n de Riesgo', desc: 'Cada contrato recibe una puntuaci\u00f3n de riesgo del 1 al 10, con los factores espec\u00edficos que la determinan.' },
+      report: { title: 'Reporte 10/10', desc: 'Obt\u00e9n consejos espec\u00edficos y accionables para mejorar cualquier contrato a una puntuaci\u00f3n perfecta.' },
+      obligationAlerts: { title: 'Alertas de Obligaciones', desc: 'Nunca pierdas un plazo — seguimiento autom\u00e1tico de obligaciones, renovaciones y per\u00edodos de aviso.' },
+      calendarSync: { title: 'Sincronizaci\u00f3n con Calendario', desc: 'Integraci\u00f3n con Google Calendar en un clic para cada fecha l\u00edmite.' },
+      printReports: { title: 'Reportes para Imprimir', desc: 'Genera reportes PDF profesionales para cualquier contrato — formateados para abogados, ejecutivos o auditor\u00edas.' },
+    },
+    pricingTitle: 'Precios simples y transparentes',
+    pricingSubtitle: 'Empieza gratis. Mejora cuando est\u00e9s listo.',
+    plans: {
+      trial: { name: 'Prueba Gratuita', price: '$0', period: '30 d\u00edas', contracts: '3 contratos', cta: 'Comenzar' },
+      starter: { name: 'Inicial', price: '$29', period: 'por mes', contracts: '25 contratos', cta: 'Comenzar' },
+      professional: { name: 'Profesional', price: '$79', period: 'por mes', contracts: 'Contratos ilimitados', cta: 'Ir a Profesional' },
+    },
+    mostPopular: 'M\u00e1s Popular',
+    billingNote: 'Facturado v\u00eda PayPal — cancela cuando quieras',
+    enterprise: {
+      title: 'Empresarial',
+      description: 'Contratos personalizados, SSO, SLA, acceso API y un gerente de cuenta dedicado.',
+      contact: 'Cont\u00e1ctanos',
+    },
+    footer: {
+      copyright: 'ContractOS \u00a9 2026 \u00b7 Plataforma de Inteligencia de Contratos',
+      contact: 'Contacto',
+    },
+  },
+} as const
+
+export default es

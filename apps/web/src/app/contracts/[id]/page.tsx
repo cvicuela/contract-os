@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import SnoozeButton from "@/components/SnoozeButton";
+import ContractTimeline from "@/app/components/charts/ContractTimeline";
+import { useI18n } from '@/i18n/context';
 
 function addToGoogleCalendar(title: string, date: string, details: string) {
   const d = date.replace(/-/g, '');
@@ -26,6 +28,10 @@ interface Contract {
   file_url: string | null;
   ai_summary: string | null;
   improvement_tips: string[] | null;
+  total_value: number | null;
+  price_per_unit: number | null;
+  unit_type: string | null;
+  escalation_rate: number | null;
   created_at: string;
 }
 
@@ -90,6 +96,7 @@ function DetailRow({ label, value }: { label: string; value: string }) {
 }
 
 export default function ContractDetailPage() {
+  const { t, dateLocale } = useI18n();
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const id = params.id;
@@ -111,7 +118,7 @@ export default function ContractDetailPage() {
           fetch(`/api/contracts/${id}/alerts`),
         ]);
 
-        if (!cRes.ok) throw new Error("Contract not found");
+        if (!cRes.ok) throw new Error(t.contractDetail.notFound);
 
         const [cData, oData, aData] = await Promise.all([
           cRes.json(),
@@ -123,7 +130,7 @@ export default function ContractDetailPage() {
         setObligations(Array.isArray(oData) ? oData : oData.obligations ?? []);
         setAlerts(Array.isArray(aData) ? aData : aData.alerts ?? []);
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to load contract");
+        setError(e instanceof Error ? e.message : t.contractDetail.failedToLoad);
       } finally {
         setLoading(false);
       }
@@ -150,7 +157,7 @@ export default function ContractDetailPage() {
   };
 
   const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this contract? This cannot be undone.")) return;
+    if (!confirm(t.contractDetail.confirmDelete)) return;
     setActionLoading("delete");
     try {
       const res = await fetch(`/api/contracts/${id}`, { method: "DELETE" });
@@ -186,10 +193,10 @@ export default function ContractDetailPage() {
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
-          Back to Contracts
+          {t.contractDetail.backToContracts}
         </Link>
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error ?? "Contract not found"}
+          {error ?? t.contractDetail.notFound}
         </div>
       </div>
     );
@@ -211,7 +218,7 @@ export default function ContractDetailPage() {
           <div style={{fontSize:'9pt',color:'#666',marginTop:'2pt'}}>Contract Intelligence Platform</div>
         </div>
         <span className="print-header-date">
-          Printed {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+          Printed {new Date().toLocaleDateString(dateLocale, { month: 'long', day: 'numeric', year: 'numeric' })}
         </span>
       </div>
       <div className="print-footer hidden">
@@ -224,7 +231,7 @@ export default function ContractDetailPage() {
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
-          Back to Contracts
+          {t.contractDetail.backToContracts}
         </Link>
         <div className="flex items-center gap-2">
           {contract.end_date && (
@@ -236,7 +243,7 @@ export default function ContractDetailPage() {
               <svg className="w-4 h-4 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11zM7 11h5v5H7z"/>
               </svg>
-              Add to Calendar
+              {t.contractDetail.addToCalendar}
             </button>
           )}
           <button
@@ -259,15 +266,15 @@ export default function ContractDetailPage() {
             <div className="flex flex-wrap items-center gap-2">
               <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">{contract.type}</span>
               <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColors(contract.status)}`}>
-                {contract.status.charAt(0).toUpperCase() + contract.status.slice(1)}
+                {t.status[contract.status.toLowerCase() as keyof typeof t.status] ?? (contract.status.charAt(0).toUpperCase() + contract.status.slice(1))}
               </span>
               <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${risk.bg} ${risk.text}`}>
-                Risk: {contract.risk_score}/10 &mdash; {risk.label}
+                {t.table.risk}: {contract.risk_score}/10 &mdash; {t.risk[risk.label.toLowerCase() as keyof typeof t.risk]}
               </span>
             </div>
           </div>
           <div className="text-xs text-gray-400">
-            Added {new Date(contract.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+            {t.contractDetail.added.replace('{date}', new Date(contract.created_at).toLocaleDateString(dateLocale, { month: "long", day: "numeric", year: "numeric" }))}
           </div>
         </div>
       </div>
@@ -278,14 +285,28 @@ export default function ContractDetailPage() {
         <div className="lg:col-span-2 space-y-6">
           {/* Contract Details */}
           <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <h2 className="text-sm font-semibold text-gray-900 mb-4">Contract Details</h2>
-            <DetailRow label="Party A" value={contract.party_a} />
-            <DetailRow label="Party B" value={contract.party_b} />
-            <DetailRow label="Start Date" value={new Date(contract.start_date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })} />
-            <DetailRow label="End Date" value={new Date(contract.end_date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })} />
-            <DetailRow label="Renewal Type" value={contract.renewal_type} />
-            <DetailRow label="Notice Days" value={`${contract.notice_days} days`} />
+            <h2 className="text-sm font-semibold text-gray-900 mb-4">{t.contractDetail.contractDetails}</h2>
+            <DetailRow label={t.table.partyA} value={contract.party_a} />
+            <DetailRow label={t.table.partyB} value={contract.party_b} />
+            <DetailRow label={t.table.startDate} value={new Date(contract.start_date).toLocaleDateString(dateLocale, { month: "long", day: "numeric", year: "numeric" })} />
+            <DetailRow label={t.table.endDate} value={new Date(contract.end_date).toLocaleDateString(dateLocale, { month: "long", day: "numeric", year: "numeric" })} />
+            <DetailRow label={t.contractDetail.renewalType} value={contract.renewal_type} />
+            <DetailRow label={t.contractDetail.noticeDays} value={t.contractDetail.daysNotice.replace('{n}', String(contract.notice_days))} />
           </div>
+
+          {/* Contract Timeline Chart */}
+          {contract.start_date && contract.end_date && (
+            <ContractTimeline
+              startDate={contract.start_date}
+              endDate={contract.end_date}
+              totalValue={contract.total_value}
+              pricePerUnit={contract.price_per_unit}
+              unitType={contract.unit_type}
+              escalationRate={contract.escalation_rate}
+              riskScore={contract.risk_score}
+              obligations={obligations}
+            />
+          )}
 
           {/* AI Summary */}
           {contract.ai_summary && (
@@ -296,7 +317,7 @@ export default function ContractDetailPage() {
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
                   </svg>
                 </div>
-                <h2 className="text-sm font-semibold text-gray-900">AI Summary</h2>
+                <h2 className="text-sm font-semibold text-gray-900">{t.contractDetail.aiSummary}</h2>
                 <span className="text-xs text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full font-medium">Claude AI</span>
               </div>
               <p className="text-sm text-gray-600 italic leading-relaxed">{contract.ai_summary}</p>
@@ -312,7 +333,7 @@ export default function ContractDetailPage() {
                     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                   </svg>
                 </div>
-                <h2 className="text-sm font-semibold text-gray-900">How to Make This Contract a 10/10</h2>
+                <h2 className="text-sm font-semibold text-gray-900">{t.contractDetail.improvementTitle}</h2>
                 <span className="text-xs text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full font-medium">AI Recommendations</span>
               </div>
               <ul className="space-y-3">
@@ -331,16 +352,16 @@ export default function ContractDetailPage() {
           {/* Obligations */}
           <div className="bg-white rounded-xl border border-gray-200">
             <div className="px-6 py-4 border-b border-gray-100">
-              <h2 className="text-sm font-semibold text-gray-900">Obligations</h2>
+              <h2 className="text-sm font-semibold text-gray-900">{t.contractDetail.obligations}</h2>
             </div>
             {obligations.length === 0 ? (
-              <div className="px-6 py-8 text-center text-sm text-gray-400">No obligations recorded</div>
+              <div className="px-6 py-8 text-center text-sm text-gray-400">{t.contractDetail.noObligations}</div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-gray-50 bg-gray-50">
-                      {["Description", "Frequency", "Due Date", "Status", "Risk", ""].map((h) => (
+                      {[t.table.description, t.table.frequency, t.table.nextDue, t.table.status, t.table.riskLevel, ""].map((h) => (
                         <th key={h} className={`px-4 py-3 text-left text-xs font-medium text-gray-500 ${h === '' ? 'print-hide' : ''}`}>{h}</th>
                       ))}
                     </tr>
@@ -354,17 +375,17 @@ export default function ContractDetailPage() {
                         <td className="px-4 py-3 text-gray-500 capitalize">{ob.frequency ?? '—'}</td>
                         <td className="px-4 py-3 text-gray-500 whitespace-nowrap text-xs">
                           {ob.next_due_date
-                            ? new Date(ob.next_due_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                            ? new Date(ob.next_due_date).toLocaleDateString(dateLocale, { month: "short", day: "numeric", year: "numeric" })
                             : '—'}
                         </td>
                         <td className="px-4 py-3">
                           <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColors(ob.status)}`}>
-                            {ob.status.charAt(0).toUpperCase() + ob.status.slice(1)}
+                            {t.status[ob.status.toLowerCase() as keyof typeof t.status] ?? (ob.status.charAt(0).toUpperCase() + ob.status.slice(1))}
                           </span>
                         </td>
                         <td className="px-4 py-3">
                           <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${getObligationRiskColors(ob.risk_level)}`}>
-                            {ob.risk_level.charAt(0).toUpperCase() + ob.risk_level.slice(1)}
+                            {t.risk[ob.risk_level.toLowerCase() as keyof typeof t.risk] ?? (ob.risk_level.charAt(0).toUpperCase() + ob.risk_level.slice(1))}
                           </span>
                         </td>
                         <td className="px-4 py-3 print-hide">
@@ -413,12 +434,12 @@ export default function ContractDetailPage() {
         <div className="space-y-6">
           {/* Risk Analysis */}
           <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <h2 className="text-sm font-semibold text-gray-900 mb-5">Risk Analysis</h2>
+            <h2 className="text-sm font-semibold text-gray-900 mb-5">{t.table.riskScore}</h2>
 
             {/* Risk Gauge */}
             <div className="space-y-3 mb-5">
               <div className="flex justify-between items-center">
-                <span className="text-xs text-gray-500">Risk Score</span>
+                <span className="text-xs text-gray-500">{t.table.riskScore}</span>
                 <span className={`text-2xl font-bold ${risk.text}`}>{contract.risk_score}<span className="text-sm font-normal text-gray-400">/10</span></span>
               </div>
               <div className="relative w-full h-3 bg-gray-100 rounded-full overflow-hidden">
@@ -428,9 +449,9 @@ export default function ContractDetailPage() {
                 />
               </div>
               <div className="flex justify-between text-xs text-gray-400">
-                <span>Low</span>
-                <span>Medium</span>
-                <span>High</span>
+                <span>{t.risk.low}</span>
+                <span>{t.risk.medium}</span>
+                <span>{t.risk.high}</span>
               </div>
             </div>
 
@@ -450,24 +471,24 @@ export default function ContractDetailPage() {
 
             <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold ${risk.bg} ${risk.text}`}>
               <span className={`w-2 h-2 rounded-full ${risk.gauge}`} />
-              {risk.label} Risk
+              {t.risk[risk.label.toLowerCase() as keyof typeof t.risk]} {t.table.risk}
             </div>
           </div>
 
           {/* Alerts */}
           <div className="bg-white rounded-xl border border-gray-200">
             <div className="px-5 py-4 border-b border-gray-100">
-              <h2 className="text-sm font-semibold text-gray-900">Alerts</h2>
+              <h2 className="text-sm font-semibold text-gray-900">{t.contractDetail.alertsOnContract}</h2>
             </div>
             <div className="p-4 space-y-2">
               {alerts.length === 0 ? (
-                <p className="text-xs text-gray-400 text-center py-4">No alerts for this contract</p>
+                <p className="text-xs text-gray-400 text-center py-4">{t.contractDetail.noAlerts}</p>
               ) : (
                 alerts.map((alert) => (
                   <div key={alert.id} className={`px-3 py-2.5 rounded-lg border text-xs ${getSeverityColors(alert.severity)}`}>
                     <p className="font-medium leading-snug">{alert.message}</p>
                     <p className="mt-1 opacity-70">
-                      {new Date(alert.trigger_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                      {new Date(alert.trigger_date).toLocaleDateString(dateLocale, { month: "short", day: "numeric", year: "numeric" })}
                     </p>
                   </div>
                 ))

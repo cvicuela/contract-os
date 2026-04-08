@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useI18n, LanguageToggle } from '@/i18n/context';
 
 function useAlertCount() {
   const [count, setCount] = useState<number | null>(null);
@@ -18,61 +19,62 @@ function useAlertCount() {
   return count;
 }
 
-const navSections = [
-  {
-    label: 'Overview',
-    links: [
-      {
-        href: '/',
-        label: 'Dashboard',
-        icon: (
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75}
-              d="M4 5a1 1 0 011-1h4a1 1 0 011 1v5a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10-3a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1v-7z" />
-          </svg>
-        ),
-      },
-    ],
-  },
-  {
-    label: 'Management',
-    links: [
-      {
-        href: '/contracts',
-        label: 'Contracts',
-        icon: (
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75}
-              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-        ),
-      },
-      {
-        href: '/alerts',
-        label: 'Alerts',
-        badge: true,
-        icon: (
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75}
-              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-          </svg>
-        ),
-      },
-      {
-        href: '/calendar',
-        label: 'Calendar',
-        icon: (
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75}
-              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-        ),
-      },
-    ],
-  },
-];
-
 export default function Sidebar() {
+  const { t } = useI18n();
+
+  const navSections = [
+    {
+      label: t.nav.overview,
+      links: [
+        {
+          href: '/',
+          label: t.nav.dashboard,
+          icon: (
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75}
+                d="M4 5a1 1 0 011-1h4a1 1 0 011 1v5a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm10 0a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10-3a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1v-7z" />
+            </svg>
+          ),
+        },
+      ],
+    },
+    {
+      label: t.nav.management,
+      links: [
+        {
+          href: '/contracts',
+          label: t.nav.contracts,
+          icon: (
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75}
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          ),
+        },
+        {
+          href: '/alerts',
+          label: t.nav.alerts,
+          badge: true,
+          icon: (
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75}
+                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+          ),
+        },
+        {
+          href: '/calendar',
+          label: t.nav.calendar,
+          icon: (
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75}
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          ),
+        },
+      ],
+    },
+  ];
   const pathname = usePathname();
   const alertCount = useAlertCount();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -92,15 +94,15 @@ export default function Sidebar() {
             </svg>
           </div>
           <div>
-            <span className="text-white font-semibold text-[15px] tracking-tight leading-none block">ContractOS</span>
-            <span className="text-gray-500 text-[10px] leading-none mt-0.5 block">Powered by Claude AI</span>
+            <span className="text-white font-semibold text-[15px] tracking-tight leading-none block">{t.brand}</span>
+            <span className="text-gray-500 text-[10px] leading-none mt-0.5 block">{t.poweredBy}</span>
           </div>
         </Link>
         {/* Close button — mobile only */}
         <button
           onClick={() => setMobileOpen(false)}
           className="md:hidden text-gray-400 hover:text-white p-1"
-          aria-label="Close menu"
+          aria-label={t.nav.closeMenu}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -137,7 +139,7 @@ export default function Sidebar() {
                       {link.icon}
                       {link.label}
                     </span>
-                    {link.badge && alertCount !== null && alertCount > 0 && (
+                    {'badge' in link && link.badge && alertCount !== null && alertCount > 0 && (
                       <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center leading-none">
                         {alertCount > 99 ? '99+' : alertCount}
                       </span>
@@ -163,8 +165,11 @@ export default function Sidebar() {
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
-          New Contract
+          {t.nav.newContract}
         </Link>
+        <div className="mt-3 flex justify-center">
+          <LanguageToggle />
+        </div>
       </div>
     </>
   );
@@ -176,7 +181,7 @@ export default function Sidebar() {
         <button
           onClick={() => setMobileOpen(true)}
           className="text-gray-400 hover:text-white p-1"
-          aria-label="Open menu"
+          aria-label={t.nav.openMenu}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -189,7 +194,7 @@ export default function Sidebar() {
                 d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
           </div>
-          <span className="text-white font-semibold text-sm tracking-tight">ContractOS</span>
+          <span className="text-white font-semibold text-sm tracking-tight">{t.brand}</span>
         </Link>
         {alertCount !== null && alertCount > 0 && (
           <span className="ml-auto bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center leading-none">

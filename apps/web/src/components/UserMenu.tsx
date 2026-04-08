@@ -4,6 +4,7 @@ import { useSession, signOut } from "next-auth/react"
 import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
 import Link from "next/link"
+import { useI18n } from '@/i18n/context'
 
 function getInitials(name?: string | null): string {
   if (!name) return "?"
@@ -28,6 +29,7 @@ export default function UserMenu() {
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const isDemo = useDemoMode()
+  const { t } = useI18n()
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -53,13 +55,13 @@ export default function UserMenu() {
     return (
       <div className="flex items-center gap-3">
         <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full font-medium">
-          Demo Mode
+          {t.userMenu.demoMode}
         </span>
         <Link
           href="/login"
           className="text-xs font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 px-3 py-1.5 rounded-lg transition-colors"
         >
-          Sign up free
+          {t.userMenu.signUpFree}
         </Link>
       </div>
     )
@@ -75,7 +77,7 @@ export default function UserMenu() {
       <button
         onClick={() => setOpen((prev) => !prev)}
         className="flex items-center gap-2 rounded-full focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-1"
-        aria-label="Open user menu"
+        aria-label={t.userMenu.openMenu}
         aria-expanded={open}
         aria-haspopup="true"
       >
@@ -100,7 +102,7 @@ export default function UserMenu() {
           {/* User info */}
           <div className="px-4 py-3">
             <p className="text-sm font-semibold text-gray-900 truncate">
-              {name ?? "Unknown user"}
+              {name ?? t.userMenu.unknownUser}
             </p>
             <p className="text-xs text-gray-500 truncate mt-0.5">
               {email ?? ""}
@@ -110,7 +112,7 @@ export default function UserMenu() {
           {/* Plan badge */}
           <div className="px-4 pb-3">
             <span className="inline-flex items-center gap-1 text-xs font-medium text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full">
-              Free Trial
+              {t.userMenu.freeTrial}
             </span>
           </div>
 
@@ -127,7 +129,7 @@ export default function UserMenu() {
               <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M5 10l7-7m0 0l7 7m-7-7v18" />
               </svg>
-              Upgrade plan
+              {t.userMenu.upgradePlan}
             </Link>
             <button
               onClick={() => {
@@ -150,7 +152,7 @@ export default function UserMenu() {
                 <polyline points="16 17 21 12 16 7" />
                 <line x1="21" y1="12" x2="9" y2="12" />
               </svg>
-              Sign out
+              {t.userMenu.signOut}
             </button>
           </div>
         </div>

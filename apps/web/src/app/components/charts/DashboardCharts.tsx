@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useI18n } from '@/i18n/context'
 import {
   PieChart,
   Pie,
@@ -76,17 +77,18 @@ function CurrencyTooltip({ active, payload, label }: { active?: boolean; payload
   )
 }
 
-function CountTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number; name?: string; payload?: { name: string } }>; label?: string }) {
+function CountTooltip({ active, payload, label, contractsLabel }: { active?: boolean; payload?: Array<{ value: number; name?: string; payload?: { name: string } }>; label?: string; contractsLabel?: string }) {
   if (!active || !payload?.length) return null
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-lg px-3 py-2 text-xs">
       <p className="font-medium text-gray-900">{label ?? payload[0]?.payload?.name}</p>
-      <p className="text-gray-600">{payload[0].value} contract{payload[0].value !== 1 ? 's' : ''}</p>
+      <p className="text-gray-600">{payload[0].value} {contractsLabel ?? `contract${payload[0].value !== 1 ? 's' : ''}`}</p>
     </div>
   )
 }
 
 export default function DashboardCharts() {
+  const { t } = useI18n()
   const [data, setData] = useState<ChartData | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -103,7 +105,7 @@ export default function DashboardCharts() {
   if (empty) {
     return (
       <div className="bg-white rounded-xl border border-gray-200 px-6 py-10 text-center">
-        <p className="text-sm text-gray-400">Upload contracts to see analytics</p>
+        <p className="text-sm text-gray-400">{t.charts.uploadToSee}</p>
       </div>
     )
   }
@@ -116,7 +118,7 @@ export default function DashboardCharts() {
       {/* Row 1: Status + Risk */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Contract Status — Donut */}
-        <ChartCard title="Contracts by Status" loading={loading}>
+        <ChartCard title={t.charts.contractsByStatus} loading={loading}>
           <ResponsiveContainer width="100%" height={220}>
             <PieChart>
               <Pie
@@ -133,7 +135,7 @@ export default function DashboardCharts() {
                   <Cell key={entry.name} fill={STATUS_COLORS[entry.name] ?? '#6366f1'} />
                 ))}
               </Pie>
-              <Tooltip content={<CountTooltip />} />
+              <Tooltip content={<CountTooltip contractsLabel={t.charts.contracts} />} />
               <Legend
                 verticalAlign="bottom"
                 iconType="circle"
@@ -147,13 +149,13 @@ export default function DashboardCharts() {
         </ChartCard>
 
         {/* Risk Distribution — Bar */}
-        <ChartCard title="Risk Distribution" loading={loading}>
+        <ChartCard title={t.charts.riskDistribution} loading={loading}>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={data?.byRisk ?? []} barSize={40}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
               <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#6b7280' }} axisLine={false} tickLine={false} />
               <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: '#6b7280' }} axisLine={false} tickLine={false} />
-              <Tooltip content={<CountTooltip />} />
+              <Tooltip content={<CountTooltip contractsLabel={t.charts.contracts} />} />
               <Bar dataKey="count" radius={[6, 6, 0, 0]}>
                 {data?.byRisk.map((entry) => (
                   <Cell key={entry.name} fill={RISK_COLORS[entry.name] ?? '#6366f1'} />
@@ -167,20 +169,20 @@ export default function DashboardCharts() {
       {/* Row 2: Type + Expiry Timeline */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Contracts by Type — Horizontal Bar */}
-        <ChartCard title="Contracts by Type" loading={loading}>
+        <ChartCard title={t.charts.contractsByType} loading={loading}>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={data?.byType ?? []} layout="vertical" barSize={20}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" horizontal={false} />
               <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12, fill: '#6b7280' }} axisLine={false} tickLine={false} />
               <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} width={100} />
-              <Tooltip content={<CountTooltip />} />
+              <Tooltip content={<CountTooltip contractsLabel={t.charts.contracts} />} />
               <Bar dataKey="count" fill="#6366f1" radius={[0, 6, 6, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
 
         {/* Expiry Timeline — Area */}
-        <ChartCard title="Expiring Contracts (Next 12 Months)" loading={loading}>
+        <ChartCard title={t.charts.expiryTimeline} loading={loading}>
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={data?.expiryTimeline ?? []}>
               <defs>
@@ -192,7 +194,7 @@ export default function DashboardCharts() {
               <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
               <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} />
               <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: '#6b7280' }} axisLine={false} tickLine={false} />
-              <Tooltip content={<CountTooltip />} />
+              <Tooltip content={<CountTooltip contractsLabel={t.charts.contracts} />} />
               <Area
                 type="monotone"
                 dataKey="count"
@@ -210,7 +212,7 @@ export default function DashboardCharts() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Total Contract Value Comparison */}
           {hasValues && (
-            <ChartCard title="Total Contract Value (Top 10)" loading={loading}>
+            <ChartCard title={t.charts.totalValue} loading={loading}>
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={data?.valueComparison ?? []} layout="vertical" barSize={18}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" horizontal={false} />
@@ -239,7 +241,7 @@ export default function DashboardCharts() {
           {/* Price Per Unit Comparison */}
           {hasPrices && (
             <ChartCard
-              title={`Price per ${data?.pricePerUnit?.[0]?.unit === 'm2' ? 'm²' : 'sqft'} (Top 10)`}
+              title={t.charts.pricePerUnit.replace('{unit}', data?.pricePerUnit?.[0]?.unit === 'm2' ? 'm²' : 'sqft')}
               loading={loading}
             >
               <ResponsiveContainer width="100%" height={220}>

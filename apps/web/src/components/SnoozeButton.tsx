@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { useI18n } from '@/i18n/context'
 
 interface SnoozeOption {
   label: string
@@ -34,10 +35,10 @@ function buildOptions(deadline: string | null): SnoozeOption[] {
   if (deadlineDate) deadlineDate.setHours(0, 0, 0, 0)
 
   const rawOptions = [
-    { label: 'Tomorrow', days: 1 },
-    { label: 'In 3 days', days: 3 },
-    { label: 'In 1 week', days: 7 },
-    { label: 'In 2 weeks', days: 14 },
+    { label: 'tomorrow', days: 1 },
+    { label: 'in3Days', days: 3 },
+    { label: 'in1Week', days: 7 },
+    { label: 'in2Weeks', days: 14 },
   ]
 
   const seen = new Set<string>()
@@ -61,9 +62,7 @@ function buildOptions(deadline: string | null): SnoozeOption[] {
     seen.add(ymd)
 
     result.push({
-      label: capped
-        ? `Day before deadline (${target.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})`
-        : opt.label,
+      label: opt.label,
       date: ymd,
       capped,
     })
@@ -93,6 +92,7 @@ export default function SnoozeButton({
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+  const { t, dateLocale } = useI18n()
 
   const options = buildOptions(deadline)
   const daysLeft = deadline ? daysUntil(deadline) : null
@@ -130,14 +130,14 @@ export default function SnoozeButton({
   // Already snoozed indicator
   if (done || (snoozedUntil && snoozedUntil >= new Date().toISOString().split('T')[0])) {
     const displayDate = snoozedUntil
-      ? new Date(snoozedUntil).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      ? new Date(snoozedUntil).toLocaleDateString(dateLocale, { month: 'short', day: 'numeric' })
       : ''
     return (
       <span className={`inline-flex items-center gap-1 ${textSize} text-violet-600 bg-violet-50 border border-violet-200 ${px} rounded-lg`}>
         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        Snoozed until {displayDate}
+        {t.snooze.snoozeUntil} {displayDate}
       </span>
     )
   }
@@ -149,7 +149,7 @@ export default function SnoozeButton({
       <button
         onClick={() => setOpen((p) => !p)}
         disabled={loading}
-        title={deadline ? `${daysLeft} days until deadline (${deadline})` : 'Snooze'}
+        title={deadline ? `${daysLeft} days until deadline (${deadline})` : t.snooze.snooze}
         className={`inline-flex items-center gap-1 ${textSize} font-medium text-violet-600 hover:text-violet-800 border border-violet-200 hover:border-violet-300 hover:bg-violet-50 ${px} rounded-lg transition-colors disabled:opacity-50`}
       >
         {loading ? (
@@ -162,7 +162,7 @@ export default function SnoozeButton({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         )}
-        Snooze
+        {t.snooze.snooze}
         <svg className="w-2.5 h-2.5 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
         </svg>
@@ -171,11 +171,11 @@ export default function SnoozeButton({
       {open && (
         <div className="absolute right-0 top-full mt-1 w-52 bg-white rounded-xl shadow-lg shadow-black/10 border border-gray-100 z-50 overflow-hidden">
           <div className="px-3 py-2 border-b border-gray-50">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Snooze until</p>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t.snooze.snoozeUntil}</p>
             {deadline && daysLeft !== null && (
               <p className="text-xs text-gray-400 mt-0.5">
                 Deadline: <span className={daysLeft <= 7 ? 'text-red-500 font-medium' : 'text-gray-600'}>
-                  {daysLeft}d left ({new Date(deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})
+                  {daysLeft}d left ({new Date(deadline).toLocaleDateString(dateLocale, { month: 'short', day: 'numeric' })})
                 </span>
               </p>
             )}
@@ -191,9 +191,11 @@ export default function SnoozeButton({
                     : 'text-gray-700 hover:bg-gray-50'
                 }`}
               >
-                <span>{opt.label}</span>
+                <span>{opt.capped
+                  ? `${t.snooze.dayBeforeDeadline.replace('{date}', new Date(opt.date).toLocaleDateString(dateLocale, { month: 'short', day: 'numeric' }))}`
+                  : (t.snooze as Record<string, string>)[opt.label] ?? opt.label}</span>
                 <span className="text-gray-400">
-                  {new Date(opt.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                  {new Date(opt.date).toLocaleDateString(dateLocale, { weekday: 'short', month: 'short', day: 'numeric' })}
                 </span>
               </button>
             ))}

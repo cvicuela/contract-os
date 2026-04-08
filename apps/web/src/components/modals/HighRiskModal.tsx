@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Modal from '../Modal';
+import { useI18n } from '@/i18n/context';
 
 interface Contract {
   id: string;
@@ -53,6 +54,7 @@ function exportCSV(contracts: Contract[]) {
 }
 
 export default function HighRiskModal({ isOpen, onClose }: Props) {
+  const { t, dateLocale } = useI18n();
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -71,7 +73,7 @@ export default function HighRiskModal({ isOpen, onClose }: Props) {
           .sort((a, b) => b.risk_score - a.risk_score);
         setContracts(highRisk);
       })
-      .catch(() => setError('Failed to load contracts'))
+      .catch(() => setError(t.modals.highRisk.failedToLoad))
       .finally(() => setLoading(false));
   }, [isOpen]);
 
@@ -79,11 +81,11 @@ export default function HighRiskModal({ isOpen, onClose }: Props) {
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="High Risk Contracts"
+      title={t.modals.highRisk.title}
       subtitle={
         loading
-          ? 'Loading...'
-          : `${contracts.length} contract${contracts.length !== 1 ? 's' : ''} with risk score ≥ 7`
+          ? t.loading
+          : t.modals.highRisk.subtitle
       }
       printTitle="ContractOS — High Risk Contracts Report"
     >
@@ -98,7 +100,7 @@ export default function HighRiskModal({ isOpen, onClose }: Props) {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
-            Export CSV
+            {t.modals.highRisk.downloadCSV}
           </button>
         </div>
 
@@ -116,14 +118,14 @@ export default function HighRiskModal({ isOpen, onClose }: Props) {
             <svg className="w-10 h-10 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <p className="text-sm text-gray-500">No high risk contracts found</p>
+            <p className="text-sm text-gray-500">{t.modals.highRisk.noHighRisk}</p>
           </div>
         ) : (
           <div className="overflow-x-auto rounded-lg border border-gray-100">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50">
-                  {['Contract Name', 'Parties', 'Risk Score', 'End Date', 'AI Summary'].map((h) => (
+                  {[t.table.name, t.table.parties, t.table.riskScore, t.table.endDate, t.table.aiSummary].map((h) => (
                     <th
                       key={h}
                       className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wide"
@@ -158,7 +160,7 @@ export default function HighRiskModal({ isOpen, onClose }: Props) {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
-                      {new Date(c.end_date).toLocaleDateString('en-US', {
+                      {new Date(c.end_date).toLocaleDateString(dateLocale, {
                         month: 'short',
                         day: 'numeric',
                         year: 'numeric',

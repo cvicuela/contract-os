@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import { useI18n } from '@/i18n/context';
 import DashboardCharts from '@/app/components/charts/DashboardCharts';
 import ExpiringModal from '@/components/modals/ExpiringModal';
 import HighRiskModal from '@/components/modals/HighRiskModal';
@@ -70,11 +71,11 @@ function getDaysLeft(endDate: string) {
   return diff;
 }
 
-function getGreeting() {
+function getGreeting(greeting: { morning: string; afternoon: string; evening: string }) {
   const hour = new Date().getHours();
-  if (hour < 12) return 'Good morning';
-  if (hour < 17) return 'Good afternoon';
-  return 'Good evening';
+  if (hour < 12) return greeting.morning;
+  if (hour < 17) return greeting.afternoon;
+  return greeting.evening;
 }
 
 function SkeletonCard() {
@@ -104,6 +105,7 @@ function SkeletonRow() {
 export default function DashboardPage() {
   const router = useRouter();
   const { data: session } = useSession();
+  const { t, dateLocale } = useI18n();
 
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [contracts, setContracts] = useState<Contract[]>([]);
@@ -131,7 +133,7 @@ export default function DashboardPage() {
         setContracts(data.contracts ?? [])
         setAlerts(data.alerts ?? [])
       })
-      .catch(() => setStatsError('Failed to load dashboard'))
+      .catch(() => setStatsError(t.dashboard.failedToLoad))
       .finally(() => {
         setLoadingStats(false)
         setLoadingContracts(false)
@@ -160,13 +162,13 @@ export default function DashboardPage() {
       const data = await res.json();
       if (data.success) {
         setChecksResult(
-          `Checks complete: ${data.alertsCreated} new alert${data.alertsCreated !== 1 ? 's' : ''} created, ${data.overdueObligationsMarked} obligation${data.overdueObligationsMarked !== 1 ? 's' : ''} marked overdue.`
+          t.dashboard.checksComplete.replace('{alerts}', String(data.alertsCreated)).replace('{obligations}', String(data.overdueObligationsMarked))
         );
       } else {
-        setChecksResult('Checks failed. Please try again.');
+        setChecksResult(t.dashboard.checksFailed);
       }
     } catch {
-      setChecksResult('Checks failed. Please try again.');
+      setChecksResult(t.dashboard.checksFailed);
     } finally {
       setRunningChecks(false);
       // Auto-clear the result message after 5s
@@ -179,7 +181,7 @@ export default function DashboardPage() {
   const statCards = stats
     ? [
         {
-          label: 'Total Contracts',
+          label: t.dashboard.totalContracts,
           value: stats.total_contracts,
           accent: 'text-gray-900',
           icon: (
@@ -192,7 +194,7 @@ export default function DashboardPage() {
           onClick: () => setShowAllContracts(true),
         },
         {
-          label: 'Active Contracts',
+          label: t.dashboard.activeContracts,
           value: stats.active_contracts,
           accent: 'text-gray-900',
           icon: (
@@ -205,7 +207,7 @@ export default function DashboardPage() {
           onClick: () => router.push('/contracts?status=active'),
         },
         {
-          label: 'Expiring Soon',
+          label: t.dashboard.expiringSoon,
           value: stats.expiring_soon,
           accent: 'text-amber-600',
           icon: (
@@ -219,7 +221,7 @@ export default function DashboardPage() {
           onClick: () => setShowExpiring(true),
         },
         {
-          label: 'High Risk',
+          label: t.dashboard.highRisk,
           value: stats.high_risk,
           accent: 'text-red-600',
           icon: (
@@ -233,7 +235,7 @@ export default function DashboardPage() {
           onClick: () => setShowHighRisk(true),
         },
         {
-          label: 'Pending Alerts',
+          label: t.dashboard.pendingAlerts,
           value: stats.pending_alerts,
           accent: 'text-gray-900',
           icon: (
@@ -246,7 +248,7 @@ export default function DashboardPage() {
           onClick: () => setShowAlerts(true),
         },
         {
-          label: 'Overdue Obligations',
+          label: t.dashboard.overdueObligations,
           value: stats.overdue_obligations,
           accent: 'text-gray-900',
           icon: (
@@ -280,9 +282,9 @@ export default function DashboardPage() {
       {/* Top header bar */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight">Dashboard</h1>
+          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight">{t.dashboard.title}</h1>
           <p className="text-sm text-gray-500 mt-1">
-            {getGreeting()}, {userName} &mdash; overview of your contract portfolio
+            {getGreeting(t.dashboard.greeting)}, {userName} &mdash; {t.dashboard.subtitle}
           </p>
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
@@ -302,14 +304,14 @@ export default function DashboardPage() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                 </svg>
-                Running...
+                {t.dashboard.running}
               </>
             ) : (
               <>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
-                Run Checks
+                {t.dashboard.runChecks}
               </>
             )}
           </button>
@@ -320,7 +322,7 @@ export default function DashboardPage() {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            New Contract
+            {t.nav.newContract}
           </button>
         </div>
       </div>
@@ -366,9 +368,9 @@ export default function DashboardPage() {
       {/* Recent Contracts */}
       <div className="bg-white rounded-xl border border-gray-200">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-gray-900">Recent Contracts</h2>
+          <h2 className="text-sm font-semibold text-gray-900">{t.dashboard.recentContracts}</h2>
           <Link href="/contracts" className="text-xs text-indigo-600 hover:text-indigo-700 font-medium">
-            View all &rarr;
+            {t.dashboard.viewAll} &rarr;
           </Link>
         </div>
 
@@ -377,7 +379,7 @@ export default function DashboardPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100">
-                {['Name', 'Type', 'Parties', 'End Date', 'Risk', 'Status', 'Days Left'].map((h) => (
+                {[t.table.name, t.table.type, t.table.parties, t.table.endDate, t.table.risk, t.table.status, t.table.daysLeft].map((h) => (
                   <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wide">
                     {h}
                   </th>
@@ -393,7 +395,7 @@ export default function DashboardPage() {
                 </tr>
               ) : contracts.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-10 text-center text-sm text-gray-400">No contracts yet</td>
+                  <td colSpan={7} className="px-4 py-10 text-center text-sm text-gray-400">{t.dashboard.noContracts}</td>
                 </tr>
               ) : (
                 contracts.map((c) => {
@@ -411,7 +413,7 @@ export default function DashboardPage() {
                         <span className="truncate block max-w-[140px]">{c.party_a} / {c.party_b}</span>
                       </td>
                       <td className="px-4 py-3 text-gray-500">
-                        {new Date(c.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        {new Date(c.end_date).toLocaleDateString(dateLocale, { month: 'short', day: 'numeric', year: 'numeric' })}
                       </td>
                       <td className="px-4 py-3">
                         <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold ${risk.bg} ${risk.text}`}>
@@ -426,7 +428,7 @@ export default function DashboardPage() {
                       </td>
                       <td className="px-4 py-3">
                         <span className={`text-xs font-medium ${daysLeft < 0 ? 'text-red-600' : daysLeft < 30 ? 'text-amber-600' : 'text-gray-600'}`}>
-                          {daysLeft < 0 ? `${Math.abs(daysLeft)}d ago` : `${daysLeft}d`}
+                          {daysLeft < 0 ? t.days.ago.replace('{n}', String(Math.abs(daysLeft))) : t.days.left.replace('{n}', String(daysLeft))}
                         </span>
                       </td>
                     </tr>
@@ -449,7 +451,7 @@ export default function DashboardPage() {
           ) : statsError ? (
             <div className="px-4 py-6 text-center text-sm text-red-600">{statsError}</div>
           ) : contracts.length === 0 ? (
-            <div className="px-4 py-10 text-center text-sm text-gray-400">No contracts yet</div>
+            <div className="px-4 py-10 text-center text-sm text-gray-400">{t.dashboard.noContracts}</div>
           ) : (
             contracts.map((c) => {
               const risk = getRiskColor(c.risk_score);
@@ -465,13 +467,13 @@ export default function DashboardPage() {
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
                     <span>{c.type}</span>
                     <span>{c.party_a} / {c.party_b}</span>
-                    <span>{new Date(c.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                    <span>{new Date(c.end_date).toLocaleDateString(dateLocale, { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                     <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full font-semibold ${risk.bg} ${risk.text}`}>
                       <span className={`w-1.5 h-1.5 rounded-full ${risk.dot}`} />
                       {c.risk_score}/10
                     </span>
                     <span className={`font-medium ${daysLeft < 0 ? 'text-red-600' : daysLeft < 30 ? 'text-amber-600' : 'text-gray-600'}`}>
-                      {daysLeft < 0 ? `${Math.abs(daysLeft)}d ago` : `${daysLeft}d left`}
+                      {daysLeft < 0 ? t.days.ago.replace('{n}', String(Math.abs(daysLeft))) : t.days.leftFull.replace('{n}', String(daysLeft))}
                     </span>
                   </div>
                 </Link>
@@ -484,9 +486,9 @@ export default function DashboardPage() {
       {/* Active Alerts */}
       <div className="bg-white rounded-xl border border-gray-200">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-gray-900">Active Alerts</h2>
+          <h2 className="text-sm font-semibold text-gray-900">{t.dashboard.activeAlerts}</h2>
           <Link href="/alerts" className="text-xs text-indigo-600 hover:text-indigo-700 font-medium">
-            View all &rarr;
+            {t.dashboard.viewAll} &rarr;
           </Link>
         </div>
         <div className="p-4 space-y-2">
@@ -495,7 +497,7 @@ export default function DashboardPage() {
               <div key={i} className="h-14 bg-gray-50 rounded-lg animate-pulse" />
             ))
           ) : alerts.filter((a) => a.status !== 'dismissed').length === 0 ? (
-            <div className="py-8 text-center text-sm text-gray-400">No active alerts</div>
+            <div className="py-8 text-center text-sm text-gray-400">{t.dashboard.noActiveAlerts}</div>
           ) : (
             alerts
               .filter((a) => a.status !== 'dismissed')
@@ -511,14 +513,14 @@ export default function DashboardPage() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-gray-800 truncate">{alert.message}</p>
                     <p className="text-xs text-gray-500 mt-0.5">
-                      {new Date(alert.trigger_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      {new Date(alert.trigger_date).toLocaleDateString(dateLocale, { month: 'short', day: 'numeric', year: 'numeric' })}
                     </p>
                   </div>
                   <button
                     onClick={() => dismissAlert(alert.id)}
                     className="text-xs text-gray-400 hover:text-gray-600 font-medium flex-shrink-0 px-2 py-1 rounded hover:bg-white transition-colors"
                   >
-                    Dismiss
+                    {t.dashboard.dismiss}
                   </button>
                 </div>
               ))

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Modal from '../Modal';
+import { useI18n } from '@/i18n/context';
 
 interface Alert {
   id: string;
@@ -70,6 +71,7 @@ async function patchAlert(id: string, status: string) {
 }
 
 export default function AlertsModal({ isOpen, onClose }: Props) {
+  const { t, dateLocale } = useI18n();
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -91,7 +93,7 @@ export default function AlertsModal({ isOpen, onClose }: Props) {
           );
         setAlerts(active);
       })
-      .catch(() => setError('Failed to load alerts'))
+      .catch(() => setError(t.modals.alerts.failedToLoad))
       .finally(() => setLoading(false));
   }, [isOpen]);
 
@@ -115,7 +117,7 @@ export default function AlertsModal({ isOpen, onClose }: Props) {
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Active Alerts"
+      title={t.modals.alerts.title}
       subtitle={
         loading
           ? 'Loading...'
@@ -131,13 +133,13 @@ export default function AlertsModal({ isOpen, onClose }: Props) {
               onClick={markAllRead}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
             >
-              Mark all as read
+              {t.modals.alerts.markRead}
             </button>
             <button
               onClick={dismissAll}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
             >
-              Dismiss all
+              {t.modals.alerts.dismiss}
             </button>
           </div>
         )}
@@ -155,7 +157,7 @@ export default function AlertsModal({ isOpen, onClose }: Props) {
             <svg className="w-10 h-10 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <p className="text-sm text-gray-500">No active alerts</p>
+            <p className="text-sm text-gray-500">{t.modals.alerts.noAlerts}</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -185,7 +187,7 @@ export default function AlertsModal({ isOpen, onClose }: Props) {
                     )}
                     {alert.trigger_date && (
                       <span className="text-xs text-gray-400">
-                        {new Date(alert.trigger_date).toLocaleDateString('en-US', {
+                        {new Date(alert.trigger_date).toLocaleDateString(dateLocale, {
                           month: 'short',
                           day: 'numeric',
                           year: 'numeric',
@@ -198,7 +200,7 @@ export default function AlertsModal({ isOpen, onClose }: Props) {
                   onClick={() => dismissAlert(alert.id)}
                   className="print:hidden flex-shrink-0 text-xs text-gray-400 hover:text-gray-600 font-medium px-2 py-1 rounded hover:bg-white transition-colors"
                 >
-                  Dismiss
+                  {t.modals.alerts.dismiss}
                 </button>
               </div>
             ))}

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
+import { useI18n } from '@/i18n/context';
 
 interface Contract {
   id: string;
@@ -56,6 +57,7 @@ function SkeletonRow() {
 }
 
 export default function ContractsPage() {
+  const { t, dateLocale } = useI18n();
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -119,15 +121,15 @@ export default function ContractsPage() {
 
   const handleUpload = async () => {
     if (!contractName.trim()) {
-      setUploadError("Please enter a contract name.");
+      setUploadError(t.upload.enterName);
       return;
     }
     if (modalTab === "text" && !contractText.trim()) {
-      setUploadError("Please paste contract text.");
+      setUploadError(t.upload.enterText);
       return;
     }
     if (modalTab === "file" && !selectedFile) {
-      setUploadError("Please select a file.");
+      setUploadError(t.upload.selectFile);
       return;
     }
 
@@ -163,7 +165,7 @@ export default function ContractsPage() {
       setUploadSuccess(data.contract ?? data);
       fetchContracts();
     } catch (e) {
-      setUploadError(e instanceof Error ? e.message : "Upload failed");
+      setUploadError(e instanceof Error ? e.message : t.upload.failed);
     } finally {
       setUploading(false);
     }
@@ -181,8 +183,8 @@ export default function ContractsPage() {
       {/* Header */}
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight">Contracts</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage and analyze your contracts</p>
+          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight">{t.contractsPage.title}</h1>
+          <p className="text-sm text-gray-500 mt-1">{t.contractsPage.subtitle}</p>
         </div>
         <button
           onClick={() => setShowModal(true)}
@@ -191,7 +193,7 @@ export default function ContractsPage() {
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
           </svg>
-          Upload Contract
+          {t.contractsPage.uploadContract}
         </button>
       </div>
 
@@ -203,26 +205,35 @@ export default function ContractsPage() {
           </svg>
           <input
             type="text"
-            placeholder="Search contracts..."
+            placeholder={t.contractsPage.searchPlaceholder}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
           />
         </div>
         <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1 overflow-x-auto">
-          {TABS.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                activeTab === tab
-                  ? "bg-indigo-600 text-white shadow-sm"
-                  : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
+          {TABS.map((tab) => {
+            const tabLabels: Record<Tab, string> = {
+              "All": t.contractsPage.filterAll,
+              "Active": t.contractsPage.filterActive,
+              "Expiring": t.contractsPage.filterExpiring,
+              "High Risk": t.contractsPage.filterHighRisk,
+              "Expired": t.contractsPage.filterExpired,
+            };
+            return (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                  activeTab === tab
+                    ? "bg-indigo-600 text-white shadow-sm"
+                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                {tabLabels[tab]}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -236,7 +247,7 @@ export default function ContractsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50">
-                  {["Name", "Type", "Party A", "Party B", "Duration", "Risk Score", "Status", "Actions"].map((h) => (
+                  {[t.table.name, t.table.type, t.table.partyA, t.table.partyB, t.table.duration, t.table.riskScore, t.table.status, t.table.actions].map((h) => (
                     <th key={h} className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wide">
                       {h}
                     </th>
@@ -249,7 +260,7 @@ export default function ContractsPage() {
                 ) : filtered.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="px-4 py-12 text-center text-sm text-gray-400">
-                      {search ? "No contracts match your search" : "No contracts yet — upload one to get started"}
+                      {search ? t.contractsPage.noMatch : t.contractsPage.noContracts}
                     </td>
                   </tr>
                 ) : (
@@ -268,9 +279,9 @@ export default function ContractsPage() {
                           <span className="truncate block">{c.party_b}</span>
                         </td>
                         <td className="px-4 py-3.5 text-gray-500 text-xs whitespace-nowrap">
-                          {new Date(c.start_date).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
+                          {new Date(c.start_date).toLocaleDateString(dateLocale, { month: "short", year: "numeric" })}
                           {" "}&rarr;{" "}
-                          {new Date(c.end_date).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
+                          {new Date(c.end_date).toLocaleDateString(dateLocale, { month: "short", year: "numeric" })}
                         </td>
                         <td className="px-4 py-3.5">
                           <div className="flex items-center gap-2">
@@ -285,7 +296,7 @@ export default function ContractsPage() {
                         </td>
                         <td className="px-4 py-3.5">
                           <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColors(c.status)}`}>
-                            {c.status.charAt(0).toUpperCase() + c.status.slice(1)}
+                            {t.status[c.status.toLowerCase() as keyof typeof t.status] ?? (c.status.charAt(0).toUpperCase() + c.status.slice(1))}
                           </span>
                         </td>
                         <td className="px-4 py-3.5">
@@ -293,7 +304,7 @@ export default function ContractsPage() {
                             href={`/contracts/${c.id}`}
                             className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-700 px-3 py-1.5 rounded-lg border border-indigo-200 hover:bg-indigo-50 transition-colors"
                           >
-                            View
+                            {t.view}
                             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                             </svg>
@@ -318,7 +329,7 @@ export default function ContractsPage() {
               ))
             ) : filtered.length === 0 ? (
               <div className="px-4 py-12 text-center text-sm text-gray-400">
-                {search ? "No contracts match your search" : "No contracts yet — upload one to get started"}
+                {search ? t.contractsPage.noMatch : t.contractsPage.noContracts}
               </div>
             ) : (
               filtered.map((c) => {
@@ -328,16 +339,16 @@ export default function ContractsPage() {
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <span className="font-medium text-gray-900 text-sm leading-snug">{c.name}</span>
                       <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0 ${getStatusColors(c.status)}`}>
-                        {c.status.charAt(0).toUpperCase() + c.status.slice(1)}
+                        {t.status[c.status.toLowerCase() as keyof typeof t.status] ?? (c.status.charAt(0).toUpperCase() + c.status.slice(1))}
                       </span>
                     </div>
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
                       <span>{c.type}</span>
                       <span>{c.party_a} / {c.party_b}</span>
                       <span className="whitespace-nowrap">
-                        {new Date(c.start_date).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
+                        {new Date(c.start_date).toLocaleDateString(dateLocale, { month: "short", year: "numeric" })}
                         {" → "}
-                        {new Date(c.end_date).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
+                        {new Date(c.end_date).toLocaleDateString(dateLocale, { month: "short", year: "numeric" })}
                       </span>
                       <span className={`font-semibold ${risk.text}`}>Risk: {c.risk_score}/10</span>
                     </div>
@@ -362,7 +373,7 @@ export default function ContractsPage() {
           <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden">
             {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900">Upload Contract</h2>
+              <h2 className="text-lg font-semibold text-gray-900">{t.upload.title}</h2>
               <button onClick={closeModal} className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -373,7 +384,7 @@ export default function ContractsPage() {
             <div className="px-6 py-5 space-y-4">
               {/* Contract Name */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Contract Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">{t.upload.contractName}</label>
                 <input
                   type="text"
                   value={contractName}
@@ -385,15 +396,15 @@ export default function ContractsPage() {
 
               {/* Tabs */}
               <div className="flex border border-gray-200 rounded-lg p-1 bg-gray-50 gap-1">
-                {(["text", "file"] as const).map((t) => (
+                {(["text", "file"] as const).map((tab) => (
                   <button
-                    key={t}
-                    onClick={() => setModalTab(t)}
+                    key={tab}
+                    onClick={() => setModalTab(tab)}
                     className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors ${
-                      modalTab === t ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
+                      modalTab === tab ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
                     }`}
                   >
-                    {t === "text" ? "Paste Text" : "Upload File"}
+                    {tab === "text" ? t.upload.pasteText : t.upload.uploadFile}
                   </button>
                 ))}
               </div>
@@ -405,7 +416,7 @@ export default function ContractsPage() {
                     <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <span className="text-sm font-semibold text-emerald-800">Contract Analyzed Successfully</span>
+                    <span className="text-sm font-semibold text-emerald-800">{t.upload.success}</span>
                   </div>
                   <div className="space-y-2 text-xs text-emerald-700">
                     <div className="flex justify-between"><span className="font-medium">Name:</span><span>{uploadSuccess.name}</span></div>
@@ -428,23 +439,23 @@ export default function ContractsPage() {
                       href={`/contracts/${uploadSuccess.id}`}
                       className="flex-1 text-center text-xs font-medium py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
                     >
-                      View Contract
+                      {t.upload.viewContract}
                     </Link>
                     <button
                       onClick={closeModal}
                       className="flex-1 text-center text-xs font-medium py-2 rounded-lg border border-emerald-300 text-emerald-700 hover:bg-emerald-100 transition-colors"
                     >
-                      Upload Another
+                      {t.upload.uploadAnother}
                     </button>
                   </div>
                 </div>
               ) : modalTab === "text" ? (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Contract Text</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">{t.upload.contractText}</label>
                   <textarea
                     value={contractText}
                     onChange={(e) => setContractText(e.target.value)}
-                    placeholder="Paste the full contract text here..."
+                    placeholder={t.upload.pastePlaceholder}
                     rows={10}
                     className="w-full px-3.5 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent placeholder-gray-400 resize-none font-mono"
                   />
@@ -486,8 +497,8 @@ export default function ContractsPage() {
                         <svg className="w-10 h-10 text-gray-300 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                         </svg>
-                        <p className="text-sm text-gray-500">Drop a file here, or <span className="text-indigo-600 font-medium">browse</span></p>
-                        <p className="text-xs text-gray-400">PDF, DOC, DOCX, TXT</p>
+                        <p className="text-sm text-gray-500">{t.upload.dropFile}</p>
+                        <p className="text-xs text-gray-400">{t.upload.fileTypes}</p>
                       </div>
                     )}
                   </div>
@@ -512,10 +523,10 @@ export default function ContractsPage() {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                       </svg>
-                      Claude is analyzing...
+                      {t.upload.analyzing}
                     </>
                   ) : (
-                    "Analyze with Claude AI"
+                    t.upload.analyzeButton
                   )}
                 </button>
               )}

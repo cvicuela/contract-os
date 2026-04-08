@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Modal from '../Modal';
+import { useI18n } from '@/i18n/context';
 
 interface Contract {
   id: string;
@@ -71,6 +72,7 @@ function exportCSV(contracts: Contract[]) {
 }
 
 export default function ExpiringModal({ isOpen, onClose }: Props) {
+  const { t, dateLocale } = useI18n();
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -89,7 +91,7 @@ export default function ExpiringModal({ isOpen, onClose }: Props) {
           .sort((a, b) => getDaysUntilExpiry(a.end_date) - getDaysUntilExpiry(b.end_date));
         setContracts(expiring);
       })
-      .catch(() => setError('Failed to load contracts'))
+      .catch(() => setError(t.modals.expiring.failedToLoad))
       .finally(() => setLoading(false));
   }, [isOpen]);
 
@@ -97,11 +99,11 @@ export default function ExpiringModal({ isOpen, onClose }: Props) {
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Expiring Contracts"
+      title={t.modals.expiring.title}
       subtitle={
         loading
-          ? 'Loading...'
-          : `${contracts.length} contract${contracts.length !== 1 ? 's' : ''} expiring within 90 days`
+          ? t.loading
+          : t.modals.expiring.subtitle
       }
       printTitle="ContractOS — Expiring Contracts Report"
     >
@@ -116,7 +118,7 @@ export default function ExpiringModal({ isOpen, onClose }: Props) {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
-            Export CSV
+            {t.modals.expiring.downloadCSV}
           </button>
         </div>
 
@@ -134,14 +136,14 @@ export default function ExpiringModal({ isOpen, onClose }: Props) {
             <svg className="w-10 h-10 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <p className="text-sm text-gray-500">No contracts expiring in the next 90 days</p>
+            <p className="text-sm text-gray-500">{t.modals.expiring.noExpiring}</p>
           </div>
         ) : (
           <div className="overflow-x-auto rounded-lg border border-gray-100">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50">
-                  {['Contract Name', 'Type', 'End Date', 'Days Left', 'Risk Score', 'Actions'].map((h) => (
+                  {[t.table.name, t.table.type, t.table.endDate, t.table.daysLeft, t.table.riskScore, t.table.actions].map((h) => (
                     <th
                       key={h}
                       className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wide"
@@ -170,7 +172,7 @@ export default function ExpiringModal({ isOpen, onClose }: Props) {
                       </td>
                       <td className="px-4 py-3 text-gray-500">{c.type}</td>
                       <td className="px-4 py-3 text-gray-600">
-                        {new Date(c.end_date).toLocaleDateString('en-US', {
+                        {new Date(c.end_date).toLocaleDateString(dateLocale, {
                           month: 'short',
                           day: 'numeric',
                           year: 'numeric',

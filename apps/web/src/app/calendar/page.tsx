@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
+import { useI18n } from '@/i18n/context';
 
 interface CalendarEvent {
   date: string; // YYYY-MM-DD
@@ -38,18 +39,28 @@ interface Alert {
   contracts?: { name: string } | null;
 }
 
-const EVENT_STYLES: Record<string, { dot: string; badge: string; label: string }> = {
-  expiry:     { dot: 'bg-red-500',    badge: 'bg-red-100 text-red-700 border-red-200',     label: 'Expiry' },
-  notice:     { dot: 'bg-amber-500',  badge: 'bg-amber-100 text-amber-700 border-amber-200', label: 'Notice Deadline' },
-  obligation: { dot: 'bg-blue-500',   badge: 'bg-blue-100 text-blue-700 border-blue-200',   label: 'Obligation' },
-  alert:      { dot: 'bg-violet-500', badge: 'bg-violet-100 text-violet-700 border-violet-200', label: 'Alert' },
+const EVENT_STYLES: Record<string, { dot: string; badge: string }> = {
+  expiry:     { dot: 'bg-red-500',    badge: 'bg-red-100 text-red-700 border-red-200' },
+  notice:     { dot: 'bg-amber-500',  badge: 'bg-amber-100 text-amber-700 border-amber-200' },
+  obligation: { dot: 'bg-blue-500',   badge: 'bg-blue-100 text-blue-700 border-blue-200' },
+  alert:      { dot: 'bg-violet-500', badge: 'bg-violet-100 text-violet-700 border-violet-200' },
 };
+
+function getEventLabel(type: string, t: ReturnType<typeof import('@/i18n/context').useI18n>['t']) {
+  const labels: Record<string, string> = {
+    expiry: t.calendarPage.expiry,
+    notice: t.calendarPage.noticeDeadline,
+    obligation: t.calendarPage.obligation,
+    alert: t.calendarPage.alert,
+  };
+  return labels[type] ?? type;
+}
 
 function addToGoogleCalendar(event: CalendarEvent) {
   const start = event.date.replace(/-/g, '');
   const end = event.date.replace(/-/g, '');
   const title = encodeURIComponent(`ContractOS: ${event.label}`);
-  const details = encodeURIComponent(`Contract: ${event.contractName}\nType: ${EVENT_STYLES[event.type].label}\nView at: http://localhost:3001/contracts/${event.contractId}`);
+  const details = encodeURIComponent(`Contract: ${event.contractName}\nType: ${event.type}\nView at: http://localhost:3001/contracts/${event.contractId}`);
   const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${start}/${end}&details=${details}`;
   window.open(url, '_blank');
 }
@@ -62,11 +73,10 @@ function getFirstDayOfWeek(year: number, month: number) {
   return new Date(year, month, 1).getDay();
 }
 
-const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-const DAYS_SHORT = ['S','M','T','W','T','F','S'];
+// Day/month names are now provided by t.calendarPage.weekDays / months
 
 export default function CalendarPage() {
+  const { t, dateLocale } = useI18n();
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
@@ -205,16 +215,16 @@ export default function CalendarPage() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight">Calendar</h1>
-          <p className="text-sm text-gray-500 mt-1">Contract deadlines, obligations & alerts at a glance</p>
+          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 tracking-tight">{t.calendarPage.title}</h1>
+          <p className="text-sm text-gray-500 mt-1">{t.calendarPage.subtitle}</p>
         </div>
 
         {/* Legend */}
         <div className="flex flex-wrap items-center gap-3">
-          {Object.entries(EVENT_STYLES).map(([key, val]) => (
+          {Object.keys(EVENT_STYLES).map((key) => (
             <span key={key} className="flex items-center gap-1.5 text-xs text-gray-500">
-              <span className={`w-2 h-2 rounded-full ${val.dot}`} />
-              {val.label}
+              <span className={`w-2 h-2 rounded-full ${EVENT_STYLES[key].dot}`} />
+              {getEventLabel(key, t)}
             </span>
           ))}
         </div>
@@ -230,7 +240,7 @@ export default function CalendarPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <h2 className="text-base font-semibold text-gray-900">{MONTHS[month]} {year}</h2>
+            <h2 className="text-base font-semibold text-gray-900">{t.calendarPage.months[month]} {year}</h2>
             <button onClick={nextMonth} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
               <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -240,17 +250,17 @@ export default function CalendarPage() {
 
           {/* Day labels */}
           <div className="grid grid-cols-7 border-b border-gray-100">
-            {DAYS.map((d, i) => (
-              <div key={d} className="py-2 text-center text-xs font-medium text-gray-400 tracking-wide">
+            {t.calendarPage.weekDays.map((d: string, i: number) => (
+              <div key={`${d}-${i}`} className="py-2 text-center text-xs font-medium text-gray-400 tracking-wide">
                 <span className="hidden sm:inline">{d}</span>
-                <span className="sm:hidden">{DAYS_SHORT[i]}</span>
+                <span className="sm:hidden">{t.calendarPage.weekDaysShort[i]}</span>
               </div>
             ))}
           </div>
 
           {/* Day cells */}
           {loading ? (
-            <div className="h-64 flex items-center justify-center text-sm text-gray-400">Loading events...</div>
+            <div className="h-64 flex items-center justify-center text-sm text-gray-400">{t.calendarPage.loadingEvents}</div>
           ) : (
             <div className="grid grid-cols-7">
               {/* Empty cells before first day */}
@@ -311,7 +321,7 @@ export default function CalendarPage() {
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
               <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-gray-900">
-                  {new Date(selectedDay + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                  {new Date(selectedDay + 'T12:00:00').toLocaleDateString(dateLocale, { weekday: 'long', month: 'long', day: 'numeric' })}
                 </h3>
                 <button onClick={() => setSelectedDay(null)} className="text-gray-400 hover:text-gray-600">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -321,7 +331,7 @@ export default function CalendarPage() {
               </div>
               <div className="p-3 space-y-2">
                 {selectedEvents.length === 0 ? (
-                  <p className="text-xs text-gray-400 text-center py-4">No events</p>
+                  <p className="text-xs text-gray-400 text-center py-4">{t.calendarPage.noEvents}</p>
                 ) : selectedEvents.map((ev, i) => (
                   <div key={i} className={`rounded-lg border px-3 py-2.5 ${EVENT_STYLES[ev.type].badge}`}>
                     <div className="flex items-start justify-between gap-2">
@@ -331,7 +341,7 @@ export default function CalendarPage() {
                       </div>
                       <button
                         onClick={() => addToGoogleCalendar(ev)}
-                        title="Add to Google Calendar"
+                        title={t.calendarPage.addToGoogleCalendar}
                         className="flex-shrink-0 opacity-60 hover:opacity-100 transition-opacity"
                       >
                         <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
@@ -343,7 +353,7 @@ export default function CalendarPage() {
                       href={`/contracts/${ev.contractId}`}
                       className="text-[10px] underline underline-offset-2 opacity-70 hover:opacity-100 mt-1 block"
                     >
-                      View contract →
+                      {t.calendarPage.viewContract} →
                     </Link>
                   </div>
                 ))}
@@ -355,12 +365,12 @@ export default function CalendarPage() {
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
             <div className="px-4 py-3 border-b border-gray-100">
               <h3 className="text-sm font-semibold text-gray-900">
-                {MONTHS[month]} — {monthEvents.length} event{monthEvents.length !== 1 ? 's' : ''}
+                {t.calendarPage.eventsThisMonth.replace('{month}', t.calendarPage.months[month]).replace('{count}', String(monthEvents.length))}
               </h3>
             </div>
             <div className="divide-y divide-gray-50 max-h-[420px] overflow-y-auto">
               {monthEvents.length === 0 ? (
-                <p className="text-xs text-gray-400 text-center py-8">No events this month</p>
+                <p className="text-xs text-gray-400 text-center py-8">{t.calendarPage.noEventsThisMonth}</p>
               ) : monthEvents.map((ev, i) => (
                 <div key={i} className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors">
                   <div className="flex flex-col items-center flex-shrink-0 w-8">
@@ -375,7 +385,7 @@ export default function CalendarPage() {
                   </div>
                   <button
                     onClick={() => addToGoogleCalendar(ev)}
-                    title="Add to Google Calendar"
+                    title={t.calendarPage.addToGoogleCalendar}
                     className="flex-shrink-0 text-gray-300 hover:text-indigo-500 transition-colors mt-0.5"
                   >
                     <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">

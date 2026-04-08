@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { SessionProvider } from "next-auth/react";
 import { auth } from "@/auth";
+import { I18nProvider } from "@/i18n/context";
 import ConditionalLayout from "./components/ConditionalLayout";
 
 const inter = Inter({
@@ -26,9 +27,11 @@ export default async function RootLayout({
     <html lang="en" className={`${inter.variable} h-full`}>
       <body className="h-full flex antialiased">
         <SessionProvider session={session}>
-          <ConditionalLayout>
-            {children}
-          </ConditionalLayout>
+          <I18nProvider>
+            <ConditionalLayout>
+              {children}
+            </ConditionalLayout>
+          </I18nProvider>
         </SessionProvider>
       </body>
     </html>

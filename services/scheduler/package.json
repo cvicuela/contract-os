@@ -1,0 +1,9 @@
+{
+  "name": "scheduler",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "checkContracts.js",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.4"
+  }
+}

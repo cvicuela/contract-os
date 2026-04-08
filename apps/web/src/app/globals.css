@@ -1,0 +1,98 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-inter);
+}
+
+/* ─── Print Styles — 8.5×11 Letter ───────────────────────────────────── */
+@media print {
+  @page {
+    size: letter portrait;
+    margin: 0.65in 0.75in;
+  }
+
+  /* Hide chrome */
+  aside,
+  header,
+  nav,
+  .print-hide,
+  [data-print="hide"] {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+    font-size: 11pt;
+    color: #111 !important;
+  }
+
+  /* Full width when sidebar gone */
+  main,
+  .flex-1 {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Print header — brand + title */
+  .print-header {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 10pt;
+    margin-bottom: 14pt;
+    border-bottom: 1.5pt solid #111;
+  }
+
+  .print-header-brand {
+    font-size: 13pt;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  .print-header-date {
+    font-size: 9pt;
+    color: #666;
+  }
+
+  /* Cards/panels */
+  .bg-white,
+  [class*="rounded"] {
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+
+  /* Section titles */
+  h1 { font-size: 16pt; font-weight: 700; margin-bottom: 6pt; }
+  h2 { font-size: 12pt; font-weight: 600; margin: 10pt 0 4pt; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+  th { background: #f3f4f6 !important; font-weight: 600; padding: 4pt 6pt; border-bottom: 1pt solid #d1d5db; text-align: left; }
+  td { padding: 4pt 6pt; border-bottom: 0.5pt solid #e5e7eb; }
+
+  /* Risk badge */
+  .print-risk-low  { color: #059669; font-weight: 600; }
+  .print-risk-med  { color: #d97706; font-weight: 600; }
+  .print-risk-high { color: #dc2626; font-weight: 600; }
+
+  /* Page break helpers */
+  .print-break-before { break-before: page; }
+  .print-no-break     { break-inside: avoid; }
+
+  /* Footer */
+  .print-footer {
+    display: block !important;
+    position: fixed;
+    bottom: 0.3in;
+    left: 0.75in;
+    right: 0.75in;
+    font-size: 8pt;
+    color: #9ca3af;
+    border-top: 0.5pt solid #e5e7eb;
+    padding-top: 4pt;
+    text-align: center;
+  }
+}

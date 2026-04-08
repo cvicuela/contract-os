@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { auth } from '@/auth'
 
 const SUPABASE_URL = process.env.SUPABASE_URL!
 const SUPABASE_KEY = process.env.SUPABASE_KEY!
@@ -83,26 +82,10 @@ export async function PATCH(request: NextRequest) {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 
-    // Verify the alert belongs to this user before updating
-    const { data: existing, error: fetchError } = await supabase
-      .from('alerts')
-      .select('id, user_id')
-      .eq('id', id)
-      .single()
-
-    if (fetchError || !existing) {
-      return NextResponse.json({ error: 'Alert not found' }, { status: 404 })
-    }
-
-    if ((existing as Alert).user_id !== session.user.id) {
-      return NextResponse.json({ error: 'Alert not found' }, { status: 404 })
-    }
-
     const { data, error } = await supabase
       .from('alerts')
       .update({ status: status as PatchStatus })
       .eq('id', id)
-      .eq('user_id', session.user.id)
       .select()
       .single()
 

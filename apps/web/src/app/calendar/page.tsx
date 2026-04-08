@@ -77,9 +77,8 @@ export default function CalendarPage() {
     async function load() {
       setLoading(true);
       try {
-        const [cRes, oRes, aRes] = await Promise.all([
+        const [cRes, aRes] = await Promise.all([
           fetch('/api/contracts'),
-          fetch('/api/obligations/overdue'),
           fetch('/api/alerts'),
         ]);
 

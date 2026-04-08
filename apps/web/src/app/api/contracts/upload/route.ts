@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
-import { auth } from '@/auth'
 
 const SUPABASE_URL = process.env.SUPABASE_URL!
 const SUPABASE_KEY = process.env.SUPABASE_KEY!
@@ -60,6 +59,7 @@ interface ParsedContractData {
   risk_score?: number
   status?: 'active' | 'expired' | 'pending' | 'cancelled'
   ai_summary?: string
+  improvement_tips?: string[]
   obligations?: Array<{
     title: string
     description?: string
@@ -74,9 +74,10 @@ interface ParsedContractData {
 const EXTRACT_PROMPT = `You are a contract analyst. Return ONLY a valid JSON object — no markdown, no explanation.
 
 Schema:
-{"name":string,"type":string,"party_a":string,"party_b":string,"start_date":"YYYY-MM-DD|null","end_date":"YYYY-MM-DD|null","renewal_type":"auto-renewal|manual|evergreen|none","notice_days":integer,"risk_score":1-10,"status":"active|expired|pending|cancelled","ai_summary":"2-3 sentences","obligations":[{"title":string,"description":string,"responsible_party":string,"due_date":"YYYY-MM-DD|null","next_due_date":"YYYY-MM-DD|null","frequency":"one-time|monthly|quarterly|annually|null","status":"pending|completed|overdue"}]}
+{"name":string,"type":string,"party_a":string,"party_b":string,"start_date":"YYYY-MM-DD|null","end_date":"YYYY-MM-DD|null","renewal_type":"auto-renewal|manual|evergreen|none","notice_days":integer,"risk_score":1-10,"status":"active|expired|pending|cancelled","ai_summary":"2-3 sentences","improvement_tips":["string (actionable tip)"],"obligations":[{"title":string,"description":string,"responsible_party":string,"due_date":"YYYY-MM-DD|null","next_due_date":"YYYY-MM-DD|null","frequency":"one-time|monthly|quarterly|annually|null","status":"pending|completed|overdue"}]}
 
-Rules: null for unknown strings, 0 for unknown numbers. risk_score: consider financial exposure, data sensitivity, termination complexity.`
+Rules: null for unknown strings, 0 for unknown numbers. risk_score: consider financial exposure, data sensitivity, termination complexity.
+improvement_tips: provide 4-7 specific, actionable bullet points that would make this contract a perfect 10/10. Each tip must identify a concrete gap or weakness found in this contract and explain exactly how to fix it (e.g. "Add a force majeure clause covering pandemic, natural disaster, and cyber-attack scenarios" not "Add missing clauses"). Focus on: missing protective clauses, vague language, liability gaps, IP ownership, data privacy, dispute resolution, termination rights, indemnification, and renewal terms.`
 
 const VERIFY_PROMPT = `You are a contract data validator. You will receive a JSON object extracted from a contract by another AI, plus a short snippet of the original contract text.
 
@@ -277,6 +278,7 @@ export async function POST(request: NextRequest) {
       file_url: fileUrl,
       raw_text: contractText,
       ai_summary: parsed.ai_summary ?? null,
+      improvement_tips: parsed.improvement_tips ?? [],
     }
 
     const { data: contractData, error: contractError } = await supabase

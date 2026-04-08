@@ -24,6 +24,7 @@ interface Contract {
   status: string;
   file_url: string | null;
   ai_summary: string | null;
+  improvement_tips: string[] | null;
   created_at: string;
 }
 
@@ -297,6 +298,31 @@ export default function ContractDetailPage() {
                 <span className="text-xs text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full font-medium">Claude AI</span>
               </div>
               <p className="text-sm text-gray-600 italic leading-relaxed">{contract.ai_summary}</p>
+            </div>
+          )}
+
+          {/* How to make this contract 10/10 */}
+          {contract.improvement_tips && contract.improvement_tips.length > 0 && (
+            <div className="bg-white rounded-xl border border-amber-200 p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-6 h-6 bg-amber-100 rounded-md flex items-center justify-center">
+                  <svg className="w-3.5 h-3.5 text-amber-600" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                  </svg>
+                </div>
+                <h2 className="text-sm font-semibold text-gray-900">How to Make This Contract a 10/10</h2>
+                <span className="text-xs text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full font-medium">AI Recommendations</span>
+              </div>
+              <ul className="space-y-3">
+                {contract.improvement_tips.map((tip, i) => (
+                  <li key={i} className="flex gap-3">
+                    <span className="mt-0.5 flex-shrink-0 w-5 h-5 rounded-full bg-amber-100 text-amber-700 text-xs font-bold flex items-center justify-center">
+                      {i + 1}
+                    </span>
+                    <span className="text-sm text-gray-700 leading-relaxed">{tip}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
 

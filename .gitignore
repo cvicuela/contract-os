@@ -53,3 +53,6 @@ apps/web/test-parser.mjs
 inicio.md
 test-parser.mjs
 apps/web/test-parser.mjs
+
+# Local Netlify folder
+.netlify

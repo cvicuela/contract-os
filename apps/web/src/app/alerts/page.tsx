@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from "react";
+import SnoozeButton from "@/components/SnoozeButton";
 
 interface Alert {
   id: string;
@@ -9,11 +10,14 @@ interface Alert {
   severity: string;
   trigger_date: string;
   status: string;
+  snoozed_until: string | null;
+  is_snoozed: boolean;
+  deadline: string | null;
   created_at: string;
   contract_name?: string | null;
 }
 
-const FILTERS = ["All", "Unread", "Critical", "Warning"] as const;
+const FILTERS = ["All", "Unread", "Critical", "Warning", "Snoozed"] as const;
 type Filter = typeof FILTERS[number];
 
 function SeverityIcon({ severity }: { severity: string }) {
@@ -41,7 +45,8 @@ function SeverityIcon({ severity }: { severity: string }) {
   );
 }
 
-function getCardBorder(severity: string) {
+function getCardBorder(severity: string, snoozed: boolean) {
+  if (snoozed) return "border-violet-200 bg-violet-50/40";
   if (severity === "critical") return "border-red-200 bg-red-50";
   if (severity === "warning") return "border-amber-200 bg-amber-50";
   return "border-blue-200 bg-blue-50";
@@ -82,9 +87,7 @@ export default function AlertsPage() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => {
-    fetchAlerts();
-  }, []);
+  useEffect(() => { fetchAlerts(); }, []);
 
   const patchAlert = async (alertId: string, payload: Record<string, string>) => {
     setActionLoading(alertId);
@@ -108,31 +111,40 @@ export default function AlertsPage() {
   const markRead = (id: string) => patchAlert(id, { status: "read" });
   const dismiss = (id: string) => patchAlert(id, { status: "dismissed" });
 
+  const handleSnoozed = (id: string, snoozedUntil: string) => {
+    setAlerts((prev) =>
+      prev.map((a) => a.id === id ? { ...a, snoozed_until: snoozedUntil, is_snoozed: true } : a)
+    );
+  };
+
+  const today = new Date().toISOString().split('T')[0];
+
   const filtered = alerts.filter((a) => {
-    if (activeFilter === "All") return a.status !== "dismissed";
-    if (activeFilter === "Unread") return a.status === "unread";
-    if (activeFilter === "Critical") return a.severity === "critical" && a.status !== "dismissed";
-    if (activeFilter === "Warning") return a.severity === "warning" && a.status !== "dismissed";
+    if (a.status === "dismissed") return false;
+    if (activeFilter === "All") return !a.is_snoozed;
+    if (activeFilter === "Unread") return a.status === "unread" && !a.is_snoozed;
+    if (activeFilter === "Critical") return a.severity === "critical" && !a.is_snoozed;
+    if (activeFilter === "Warning") return a.severity === "warning" && !a.is_snoozed;
+    if (activeFilter === "Snoozed") return !!(a.snoozed_until && a.snoozed_until >= today);
     return true;
   });
 
-  const unreadCount = alerts.filter((a) => a.status === "unread").length;
+  const unreadCount = alerts.filter((a) => a.status === "unread" && !a.is_snoozed).length;
+  const snoozedCount = alerts.filter((a) => a.is_snoozed).length;
 
   return (
     <div className="p-8 max-w-screen-xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900 tracking-tight flex items-center gap-2.5">
-            Alerts
-            {unreadCount > 0 && (
-              <span className="inline-flex items-center justify-center min-w-[1.5rem] h-6 px-1.5 rounded-full bg-red-500 text-white text-xs font-semibold">
-                {unreadCount}
-              </span>
-            )}
-          </h1>
-          <p className="text-sm text-gray-500 mt-1">Monitor contract deadlines and risks</p>
-        </div>
+      <div>
+        <h1 className="text-2xl font-semibold text-gray-900 tracking-tight flex items-center gap-2.5">
+          Alerts
+          {unreadCount > 0 && (
+            <span className="inline-flex items-center justify-center min-w-[1.5rem] h-6 px-1.5 rounded-full bg-red-500 text-white text-xs font-semibold">
+              {unreadCount}
+            </span>
+          )}
+        </h1>
+        <p className="text-sm text-gray-500 mt-1">Monitor contract deadlines and risks</p>
       </div>
 
       {/* Filters */}
@@ -151,6 +163,11 @@ export default function AlertsPage() {
             {f === "Unread" && unreadCount > 0 && (
               <span className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-red-500 text-white text-[10px] font-bold">
                 {unreadCount}
+              </span>
+            )}
+            {f === "Snoozed" && snoozedCount > 0 && (
+              <span className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-violet-500 text-white text-[10px] font-bold">
+                {snoozedCount}
               </span>
             )}
           </button>
@@ -174,9 +191,13 @@ export default function AlertsPage() {
                   d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
               </svg>
             </div>
-            <h3 className="text-sm font-medium text-gray-700">No alerts</h3>
+            <h3 className="text-sm font-medium text-gray-700">
+              {activeFilter === "Snoozed" ? "No snoozed alerts" : "No alerts"}
+            </h3>
             <p className="text-xs text-gray-400 mt-1">
-              {activeFilter === "All" ? "All caught up — no active alerts" : `No ${activeFilter.toLowerCase()} alerts`}
+              {activeFilter === "All" ? "All caught up — no active alerts" :
+               activeFilter === "Snoozed" ? "Nothing is snoozed right now" :
+               `No ${activeFilter.toLowerCase()} alerts`}
             </p>
           </div>
         ) : (
@@ -185,7 +206,7 @@ export default function AlertsPage() {
               key={alert.id}
               className={`bg-white rounded-xl border p-5 flex items-start gap-4 transition-opacity ${
                 alert.status === "read" ? "opacity-60" : ""
-              } ${getCardBorder(alert.severity)}`}
+              } ${getCardBorder(alert.severity, alert.is_snoozed)}`}
             >
               <SeverityIcon severity={alert.severity} />
 
@@ -194,7 +215,15 @@ export default function AlertsPage() {
                   <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-semibold ${getSeverityBadge(alert.severity)}`}>
                     {alert.severity.charAt(0).toUpperCase() + alert.severity.slice(1)}
                   </span>
-                  {alert.status === "unread" && (
+                  {alert.is_snoozed && (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full">
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Snoozed until {new Date(alert.snoozed_until!).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                    </span>
+                  )}
+                  {alert.status === "unread" && !alert.is_snoozed && (
                     <span className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600">
                       <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 inline-block" />
                       New
@@ -212,33 +241,43 @@ export default function AlertsPage() {
                     Triggers:{" "}
                     <span className="text-gray-600">
                       {new Date(alert.trigger_date).toLocaleDateString("en-US", {
-                        month: "long",
-                        day: "numeric",
-                        year: "numeric",
+                        month: "long", day: "numeric", year: "numeric",
                       })}
                     </span>
                   </span>
+                  {alert.deadline && (
+                    <span className="text-xs text-gray-400">
+                      Deadline:{" "}
+                      <span className="text-gray-600 font-medium">
+                        {new Date(alert.deadline).toLocaleDateString("en-US", {
+                          month: "short", day: "numeric", year: "numeric",
+                        })}
+                      </span>
+                    </span>
+                  )}
                 </div>
               </div>
 
               <div className="flex items-center gap-2 flex-shrink-0">
-                {alert.status === "unread" && (
+                <SnoozeButton
+                  itemId={alert.id}
+                  deadline={alert.deadline}
+                  snoozedUntil={alert.snoozed_until}
+                  apiPath="/api/alerts"
+                  onSnoozed={handleSnoozed}
+                />
+                {alert.status === "unread" && !alert.is_snoozed && (
                   <button
                     onClick={() => markRead(alert.id)}
                     disabled={actionLoading === alert.id}
                     className="text-xs font-medium text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 transition-colors whitespace-nowrap"
                   >
                     {actionLoading === alert.id ? (
-                      <span className="inline-flex items-center gap-1">
-                        <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                        </svg>
-                        ...
-                      </span>
-                    ) : (
-                      "Mark Read"
-                    )}
+                      <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                    ) : "Mark Read"}
                   </button>
                 )}
                 <button

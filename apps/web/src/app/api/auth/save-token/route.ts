@@ -1,3 +1,5 @@
+export const runtime = 'nodejs'
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { encrypt } from '@/lib/encrypt'
@@ -47,6 +49,19 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       )
     }
+
+    // Create/update user profile (trial starts on first sign-in)
+    const trialEnds = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
+    await supabase.from('users').upsert(
+      {
+        email,
+        google_id: userId,
+        plan: 'trial',
+        trial_ends_at: trialEnds.toISOString(),
+        updated_at: now.toISOString(),
+      },
+      { onConflict: 'email', ignoreDuplicates: true } // ignoreDuplicates keeps existing plan
+    )
 
     return NextResponse.json({ success: true })
   } catch (err) {

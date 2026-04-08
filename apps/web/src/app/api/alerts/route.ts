@@ -11,9 +11,11 @@ interface Alert {
   severity: string
   trigger_date: string | null
   status: 'unread' | 'read' | 'dismissed'
+  snoozed_until: string | null
+  is_snoozed: boolean
+  deadline: string | null
   created_at: string
   contract_name?: string | null
-  user_id?: string
 }
 
 export async function GET() {
@@ -22,7 +24,7 @@ export async function GET() {
 
     const { data, error } = await supabase
       .from('alerts')
-      .select(`id, contract_id, message, severity, trigger_date, status, created_at, contracts(name)`)
+      .select(`id, contract_id, message, severity, trigger_date, status, snoozed_until, created_at, contracts(name, end_date)`)
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -33,9 +35,11 @@ export async function GET() {
       )
     }
 
-    // Flatten the joined contract name into the alert object
+    const today = new Date().toISOString().split('T')[0]
+
     const alerts: Alert[] = (data ?? []).map((row: Record<string, unknown>) => {
-      const contractRelation = row.contracts as { name?: string } | null
+      const contractRelation = row.contracts as { name?: string; end_date?: string } | null
+      const snoozedUntil = row.snoozed_until as string | null
       return {
         id: row.id as string,
         contract_id: row.contract_id as string,
@@ -43,6 +47,10 @@ export async function GET() {
         severity: row.severity as string,
         trigger_date: row.trigger_date as string | null,
         status: row.status as 'unread' | 'read' | 'dismissed',
+        snoozed_until: snoozedUntil,
+        // isSnoozed = snoozed_until is today or in the future
+        is_snoozed: !!(snoozedUntil && snoozedUntil >= today),
+        deadline: contractRelation?.end_date ?? null,
         created_at: row.created_at as string,
         contract_name: contractRelation?.name ?? null,
       }

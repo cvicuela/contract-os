@@ -181,6 +181,8 @@ function buildAlerts(
   return alerts
 }
 
+const DEMO_USER_ID = '00000000-0000-0000-0000-000000000001'
+
 export async function POST(request: NextRequest) {
   try {
     // AUTH CHECK — temporarily bypassed for local testing
@@ -189,6 +191,16 @@ export async function POST(request: NextRequest) {
     // if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
+
+    // ── Demo mode: skip trial checks ────────────────────────────────────────
+    const cookieHeader = request.headers.get('cookie') ?? ''
+    const isDemo = cookieHeader.includes('demo_mode=1')
+
+    // ── Trial enforcement (for real users) ──────────────────────────────────
+    if (!isDemo) {
+      // TODO: replace with real session user email once auth is re-enabled
+      // For now, trial check is skipped for direct API access
+    }
     const contentType = request.headers.get('content-type') ?? ''
 
     let contractText = ''
@@ -279,6 +291,7 @@ export async function POST(request: NextRequest) {
       raw_text: contractText,
       ai_summary: parsed.ai_summary ?? null,
       improvement_tips: parsed.improvement_tips ?? [],
+      user_id: isDemo ? DEMO_USER_ID : null,
     }
 
     const { data: contractData, error: contractError } = await supabase

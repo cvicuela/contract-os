@@ -11,7 +11,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     const { id } = await context.params
 
     if (!id) {
-      return NextResponse.json({ error: 'Obligation ID is required' }, { status: 400 })
+      return NextResponse.json({ error: 'Alert ID is required' }, { status: 400 })
     }
 
     const body = await request.json()
@@ -21,12 +21,13 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
+
+    // Build the update payload
     const update: Record<string, string> = {}
 
     if (status) {
-      const validStatuses = ['pending', 'completed', 'overdue'] as const
-      type ObligationStatus = (typeof validStatuses)[number]
-      if (!validStatuses.includes(status as ObligationStatus)) {
+      const validStatuses = ['read', 'dismissed']
+      if (!validStatuses.includes(status)) {
         return NextResponse.json(
           { error: `"status" must be one of: ${validStatuses.join(', ')}` },
           { status: 400 }
@@ -36,29 +37,35 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     }
 
     if (snoozed_until) {
+      // Validate it's a real date
       const snoozeDate = new Date(snoozed_until)
       if (isNaN(snoozeDate.getTime())) {
         return NextResponse.json({ error: 'Invalid snoozed_until date' }, { status: 400 })
       }
 
-      // Fetch the obligation to validate against its own deadline (next_due_date)
-      const { data: obRow } = await supabase
-        .from('obligations')
-        .select('next_due_date')
+      // Fetch the alert to verify snooze doesn't exceed the contract deadline
+      const { data: alertRow } = await supabase
+        .from('alerts')
+        .select('contract_id, contracts(end_date)')
         .eq('id', id)
         .single()
 
-      if (obRow?.next_due_date) {
-        const deadline = new Date(obRow.next_due_date)
-        if (snoozeDate > deadline) {
-          return NextResponse.json(
-            { error: 'Snooze date cannot exceed the obligation due date' },
-            { status: 422 }
-          )
+      if (alertRow) {
+        const contractData = alertRow.contracts as { end_date?: string } | null
+        if (contractData?.end_date) {
+          const deadline = new Date(contractData.end_date)
+          if (snoozeDate > deadline) {
+            return NextResponse.json(
+              { error: 'Snooze date cannot exceed the contract end date' },
+              { status: 422 }
+            )
+          }
         }
       }
 
       update.snoozed_until = snoozed_until
+      // Keep status as unread so it re-surfaces after snooze lifts
+      if (!status) update.status = 'read'
     }
 
     if (Object.keys(update).length === 0) {
@@ -66,7 +73,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     }
 
     const { data, error } = await supabase
-      .from('obligations')
+      .from('alerts')
       .update(update)
       .eq('id', id)
       .select()
@@ -74,21 +81,15 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 
     if (error) {
       if (error.code === 'PGRST116') {
-        return NextResponse.json({ error: 'Obligation not found' }, { status: 404 })
+        return NextResponse.json({ error: 'Alert not found' }, { status: 404 })
       }
-      console.error('Supabase error updating obligation:', error)
-      return NextResponse.json(
-        { error: 'Failed to update obligation' },
-        { status: 500 }
-      )
+      console.error('Supabase error updating alert:', error)
+      return NextResponse.json({ error: 'Failed to update alert' }, { status: 500 })
     }
 
-    return NextResponse.json({ obligation: data })
+    return NextResponse.json({ alert: data })
   } catch (err) {
-    console.error('Unexpected error in PATCH /api/obligations/[id]:', err)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    console.error('Unexpected error in PATCH /api/alerts/[id]:', err)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

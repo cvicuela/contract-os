@@ -3,6 +3,7 @@
 import { useSession, signOut } from "next-auth/react"
 import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
+import Link from "next/link"
 
 function getInitials(name?: string | null): string {
   if (!name) return "?"
@@ -14,10 +15,19 @@ function getInitials(name?: string | null): string {
     .join("")
 }
 
+function useDemoMode() {
+  const [isDemo, setIsDemo] = useState(false)
+  useEffect(() => {
+    setIsDemo(document.cookie.includes('demo_mode=1'))
+  }, [])
+  return isDemo
+}
+
 export default function UserMenu() {
   const { data: session } = useSession()
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  const isDemo = useDemoMode()
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -37,6 +47,23 @@ export default function UserMenu() {
       document.removeEventListener("mousedown", handleClickOutside)
     }
   }, [open])
+
+  // Demo mode banner
+  if (isDemo && !session?.user) {
+    return (
+      <div className="flex items-center gap-3">
+        <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full font-medium">
+          Demo Mode
+        </span>
+        <Link
+          href="/login"
+          className="text-xs font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 px-3 py-1.5 rounded-lg transition-colors"
+        >
+          Sign up free
+        </Link>
+      </div>
+    )
+  }
 
   if (!session?.user) return null
 
@@ -80,11 +107,28 @@ export default function UserMenu() {
             </p>
           </div>
 
+          {/* Plan badge */}
+          <div className="px-4 pb-3">
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full">
+              Free Trial
+            </span>
+          </div>
+
           {/* Divider */}
           <div className="h-px bg-gray-100" />
 
           {/* Actions */}
           <div className="p-1">
+            <Link
+              href="/login#pricing"
+              onClick={() => setOpen(false)}
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors duration-100"
+            >
+              <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+              </svg>
+              Upgrade plan
+            </Link>
             <button
               onClick={() => {
                 setOpen(false)
@@ -114,3 +158,4 @@ export default function UserMenu() {
     </div>
   )
 }
+

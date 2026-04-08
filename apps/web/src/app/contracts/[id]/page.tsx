@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import SnoozeButton from "@/components/SnoozeButton";
 
 function addToGoogleCalendar(title: string, date: string, details: string) {
   const d = date.replace(/-/g, '');
@@ -36,6 +37,7 @@ interface Obligation {
   next_due_date: string;
   status: string;
   risk_level: string;
+  snoozed_until?: string | null;
 }
 
 interface Alert {
@@ -366,21 +368,37 @@ export default function ContractDetailPage() {
                           </span>
                         </td>
                         <td className="px-4 py-3 print-hide">
-                          {ob.next_due_date && (
-                            <button
-                              onClick={() => addToGoogleCalendar(
-                                `Obligation: ${ob.description?.split(':')[0]}`,
-                                ob.next_due_date!,
-                                `Contract: ${contract.name}\n${ob.description}`
-                              )}
-                              title="Add to Google Calendar"
-                              className="text-gray-300 hover:text-blue-500 transition-colors"
-                            >
-                              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11zM7 11h5v5H7z"/>
-                              </svg>
-                            </button>
-                          )}
+                          <div className="flex items-center gap-2">
+                            {ob.next_due_date && (
+                              <SnoozeButton
+                                itemId={ob.id}
+                                deadline={ob.next_due_date}
+                                snoozedUntil={ob.snoozed_until}
+                                apiPath="/api/obligations"
+                                onSnoozed={(obId, snoozedUntil) =>
+                                  setObligations((prev) =>
+                                    prev.map((o) => o.id === obId ? { ...o, snoozed_until: snoozedUntil } : o)
+                                  )
+                                }
+                                size="xs"
+                              />
+                            )}
+                            {ob.next_due_date && (
+                              <button
+                                onClick={() => addToGoogleCalendar(
+                                  `Obligation: ${ob.description?.split(':')[0]}`,
+                                  ob.next_due_date!,
+                                  `Contract: ${contract.name}\n${ob.description}`
+                                )}
+                                title="Add to Google Calendar"
+                                className="text-gray-300 hover:text-blue-500 transition-colors"
+                              >
+                                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                                  <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11zM7 11h5v5H7z"/>
+                                </svg>
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}

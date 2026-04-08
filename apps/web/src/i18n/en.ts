@@ -319,7 +319,7 @@ const en = {
     startFreeTrial: 'Start Free Trial',
     tryLiveDemo: 'Try Live Demo',
     loadingDemo: 'Loading demo...',
-    trialNote: 'Free trial \u00b7 No credit card required \u00b7 3 contracts included',
+    trialNote: 'Free trial \u00b7 No credit card required \u00b7 1 contract included',
     featuresTitle: 'Everything you need to manage contracts',
     featuresSubtitle: 'From upload to insight in under 30 seconds.',
     features: {
@@ -333,7 +333,7 @@ const en = {
     pricingTitle: 'Simple, transparent pricing',
     pricingSubtitle: 'Start free. Upgrade when you\'re ready.',
     plans: {
-      trial: { name: 'Free Trial', price: '$0', period: '30 days', contracts: '3 contracts', cta: 'Get Started' },
+      trial: { name: 'Free Trial', price: '$0', period: '30 days', contracts: '1 contract', cta: 'Get Started' },
       starter: { name: 'Starter', price: '$29', period: 'per month', contracts: '10 contracts', cta: 'Get Started' },
       professional: { name: 'Professional', price: '$79', period: 'per month', contracts: '25 contracts', cta: 'Go Professional' },
     },

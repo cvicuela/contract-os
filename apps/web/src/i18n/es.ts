@@ -321,7 +321,7 @@ const es: Translations = {
     startFreeTrial: 'Comenzar Prueba Gratuita',
     tryLiveDemo: 'Probar Demo',
     loadingDemo: 'Cargando demo...',
-    trialNote: 'Prueba gratuita \u00b7 Sin tarjeta de cr\u00e9dito \u00b7 3 contratos incluidos',
+    trialNote: 'Prueba gratuita \u00b7 Sin tarjeta de cr\u00e9dito \u00b7 1 contrato incluido',
     featuresTitle: 'Todo lo que necesitas para gestionar contratos',
     featuresSubtitle: 'De la subida al an\u00e1lisis en menos de 30 segundos.',
     features: {
@@ -335,7 +335,7 @@ const es: Translations = {
     pricingTitle: 'Precios simples y transparentes',
     pricingSubtitle: 'Empieza gratis. Mejora cuando est\u00e9s listo.',
     plans: {
-      trial: { name: 'Prueba Gratuita', price: '$0', period: '30 d\u00edas', contracts: '3 contratos', cta: 'Comenzar' },
+      trial: { name: 'Prueba Gratuita', price: '$0', period: '30 d\u00edas', contracts: '1 contrato', cta: 'Comenzar' },
       starter: { name: 'Inicial', price: '$29', period: 'por mes', contracts: '10 contratos', cta: 'Comenzar' },
       professional: { name: 'Profesional', price: '$79', period: 'por mes', contracts: '25 contratos', cta: 'Ir a Profesional' },
     },

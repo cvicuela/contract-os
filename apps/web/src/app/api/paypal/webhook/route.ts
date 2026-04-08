@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
           .from('users')
           .update({
             plan: 'trial',
-            plan_contract_limit: 3,
+            plan_contract_limit: 1,
             paypal_subscription_id: null,
             updated_at: new Date().toISOString(),
           })
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
           .from('users')
           .update({
             plan: 'trial',
-            plan_contract_limit: 3,
+            plan_contract_limit: 1,
             updated_at: new Date().toISOString(),
           })
           .eq('paypal_subscription_id', subscriptionId)

@@ -35,7 +35,7 @@ const PLANS = [
       "Email alerts",
     ],
     ctaAction: "paypal",
-    paypalPlanId: "STARTER_MONTHLY",
+    paypalPlanId: "P-9WS98349S69474714NHLHRGY",
     paypal: true,
   },
   {
@@ -52,7 +52,7 @@ const PLANS = [
       "Dedicated support",
     ],
     ctaAction: "paypal",
-    paypalPlanId: "PRO_MONTHLY",
+    paypalPlanId: "P-9G624143JX819992UNHLHRHA",
     paypal: true,
   },
 ]

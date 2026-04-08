@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID!
 const PAYPAL_SECRET = process.env.PAYPAL_CLIENT_SECRET!
-const PAYPAL_API = 'https://api-m.paypal.com'
+const PAYPAL_API = process.env.PAYPAL_API_URL ?? 'https://api-m.sandbox.paypal.com'
 
 async function getAccessToken(): Promise<string> {
   const res = await fetch(`${PAYPAL_API}/v1/oauth2/token`, {

@@ -74,13 +74,13 @@ interface ParsedContractData {
   }>
 }
 
-const EXTRACT_PROMPT = `You are a contract analyst. Return ONLY a valid JSON object — no markdown, no explanation.
+const EXTRACT_PROMPT = `Eres un analista de contratos. Responde SOLO con un objeto JSON válido — sin markdown, sin explicación. IMPORTANTE: ai_summary, improvement_tips y obligations DEBEN estar en español.
 
 Schema:
-{"name":string,"type":string,"party_a":string,"party_b":string,"start_date":"YYYY-MM-DD|null","end_date":"YYYY-MM-DD|null","renewal_type":"auto-renewal|manual|evergreen|none","notice_days":integer,"risk_score":1-10,"status":"active|expired|pending|cancelled","ai_summary":"2-3 sentences","improvement_tips":["string (actionable tip)"],"obligations":[{"title":string,"description":string,"responsible_party":string,"due_date":"YYYY-MM-DD|null","next_due_date":"YYYY-MM-DD|null","frequency":"one-time|monthly|quarterly|annually|null","status":"pending|completed|overdue"}]}
+{"name":string,"type":string,"party_a":string,"party_b":string,"start_date":"YYYY-MM-DD|null","end_date":"YYYY-MM-DD|null","renewal_type":"auto-renewal|manual|evergreen|none","notice_days":integer,"risk_score":1-10,"status":"active|expired|pending|cancelled","ai_summary":"2-3 oraciones en español","improvement_tips":["string (consejo accionable en español)"],"obligations":[{"title":string,"description":string,"responsible_party":string,"due_date":"YYYY-MM-DD|null","next_due_date":"YYYY-MM-DD|null","frequency":"one-time|monthly|quarterly|annually|null","status":"pending|completed|overdue"}]}
 
-Rules: null for unknown strings, 0 for unknown numbers. risk_score: consider financial exposure, data sensitivity, termination complexity.
-improvement_tips: provide 4-7 specific, actionable bullet points that would make this contract a perfect 10/10. Each tip must identify a concrete gap or weakness found in this contract and explain exactly how to fix it (e.g. "Add a force majeure clause covering pandemic, natural disaster, and cyber-attack scenarios" not "Add missing clauses"). Focus on: missing protective clauses, vague language, liability gaps, IP ownership, data privacy, dispute resolution, termination rights, indemnification, and renewal terms.`
+Reglas: null para strings desconocidos, 0 para números desconocidos. risk_score: considera exposición financiera, sensibilidad de datos, complejidad de terminación.
+improvement_tips: proporciona 4-7 puntos específicos y accionables EN ESPAÑOL que harían este contrato un 10/10 perfecto. Cada tip debe identificar una brecha o debilidad concreta encontrada en este contrato y explicar exactamente cómo corregirla (ej. "Agregar una cláusula de fuerza mayor que cubra pandemia, desastre natural y ciberataques" no "Agregar cláusulas faltantes"). Enfócate en: cláusulas protectoras faltantes, lenguaje vago, brechas de responsabilidad, propiedad intelectual, privacidad de datos, resolución de disputas, derechos de terminación, indemnización y términos de renovación.`
 
 
 async function extractTextFromBuffer(buffer: Buffer, mimeType: string, fileName: string): Promise<string> {

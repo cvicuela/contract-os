@@ -1,4 +1,4 @@
-import crypto from 'crypto'
+import crypto from 'node:crypto'
 
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY! // 32-byte hex string
 const ALGORITHM = 'aes-256-gcm'

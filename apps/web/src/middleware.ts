@@ -3,6 +3,7 @@ import { NextResponse } from "next/server"
 
 export default auth((req) => {
   const isLoggedIn = !!req.auth
+  const isDemo = req.cookies.get('demo_mode')?.value === '1'
   const { pathname } = req.nextUrl
 
   const isPublic = (
@@ -12,7 +13,7 @@ export default auth((req) => {
     pathname === "/favicon.ico"
   )
 
-  if (!isLoggedIn && !isPublic) {
+  if (!isLoggedIn && !isDemo && !isPublic) {
     return NextResponse.redirect(new URL("/login", req.url))
   }
 

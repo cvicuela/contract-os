@@ -124,23 +124,20 @@ export default function DashboardPage() {
   const [showObligations, setShowObligations] = useState(false);
 
   useEffect(() => {
+    // Single request — dashboard API now returns stats + contracts + alerts
     fetch('/api/dashboard')
       .then((r) => r.json())
-      .then((data) => setStats(data))
-      .catch(() => setStatsError('Failed to load stats'))
-      .finally(() => setLoadingStats(false));
-
-    fetch('/api/contracts?limit=5')
-      .then((r) => r.json())
-      .then((data) => setContracts(Array.isArray(data) ? data : (data.contracts ?? [])))
-      .catch(() => setContractsError('Failed to load contracts'))
-      .finally(() => setLoadingContracts(false));
-
-    fetch('/api/alerts')
-      .then((r) => r.json())
-      .then((data) => setAlerts(Array.isArray(data) ? data : (data.alerts ?? [])))
-      .catch(() => setAlertsError('Failed to load alerts'))
-      .finally(() => setLoadingAlerts(false));
+      .then((data) => {
+        setStats(data.stats ?? data)
+        setContracts(data.contracts ?? [])
+        setAlerts(data.alerts ?? [])
+      })
+      .catch(() => setStatsError('Failed to load dashboard'))
+      .finally(() => {
+        setLoadingStats(false)
+        setLoadingContracts(false)
+        setLoadingAlerts(false)
+      })
   }, []);
 
   const dismissAlert = async (alertId: string) => {

@@ -5,7 +5,7 @@ import { createClient } from '@supabase/supabase-js'
 
 const SUPABASE_URL = process.env.SUPABASE_URL!
 const SUPABASE_KEY = process.env.SUPABASE_KEY!
-const STARTER_PLAN_ID = 'P-9WS98349S69474714NHLHRGY'
+const STARTER_PLAN_ID = process.env.PAYPAL_STARTER_PLAN_ID ?? 'P-48864583F3428854WNHLIZ2I'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)

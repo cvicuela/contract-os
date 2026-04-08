@@ -9,7 +9,7 @@ const SUPABASE_KEY = process.env.SUPABASE_KEY!
 
 export async function GET() {
   try {
-    const { error: authError } = await requireAuth()
+    const { userId, error: authError } = await requireAuth()
     if (authError) return authError
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
@@ -30,13 +30,13 @@ export async function GET() {
       contractsResult,
       alertsResult,
     ] = await Promise.all([
-      supabase.from('contracts').select('*', { count: 'exact', head: true }),
-      supabase.from('contracts').select('*', { count: 'exact', head: true }).eq('status', 'active'),
-      supabase.from('contracts').select('*', { count: 'exact', head: true }).eq('status', 'active').gte('end_date', nowIso).lte('end_date', thirtyDaysIso),
-      supabase.from('contracts').select('*', { count: 'exact', head: true }).gte('risk_score', 7),
+      supabase.from('contracts').select('*', { count: 'exact', head: true }).eq('user_id', userId),
+      supabase.from('contracts').select('*', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'active'),
+      supabase.from('contracts').select('*', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'active').gte('end_date', nowIso).lte('end_date', thirtyDaysIso),
+      supabase.from('contracts').select('*', { count: 'exact', head: true }).eq('user_id', userId).gte('risk_score', 7),
       supabase.from('alerts').select('*', { count: 'exact', head: true }).eq('status', 'unread'),
       supabase.from('obligations').select('*', { count: 'exact', head: true }).or(`status.eq.overdue,and(next_due_date.lt.${nowIso},status.eq.pending)`),
-      supabase.from('contracts').select('id,name,type,party_a,party_b,start_date,end_date,renewal_type,notice_days,risk_score,status,file_url,ai_summary,created_at').order('created_at', { ascending: false }).limit(5),
+      supabase.from('contracts').select('id,name,type,party_a,party_b,start_date,end_date,renewal_type,notice_days,risk_score,status,file_url,ai_summary,created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(5),
       supabase.from('alerts').select('id,contract_id,message,severity,trigger_date,status,created_at').eq('status', 'unread').order('trigger_date', { ascending: true }).limit(6),
     ])
 

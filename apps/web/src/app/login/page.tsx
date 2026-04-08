@@ -35,7 +35,7 @@ const PLANS = [
       "Email alerts",
     ],
     ctaAction: "paypal",
-    paypalPlanId: "P-9WS98349S69474714NHLHRGY",
+    paypalPlanId: "P-48864583F3428854WNHLIZ2I",
     paypal: true,
   },
   {
@@ -52,7 +52,7 @@ const PLANS = [
       "Dedicated support",
     ],
     ctaAction: "paypal",
-    paypalPlanId: "P-9G624143JX819992UNHLHRHA",
+    paypalPlanId: "P-0R278795KG320490CNHLIZ2I",
     paypal: true,
   },
 ]

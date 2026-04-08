@@ -27,7 +27,7 @@ interface Contract {
 
 export async function GET(request: NextRequest) {
   try {
-    const { error: authError } = await requireAuth()
+    const { userId, error: authError } = await requireAuth()
     if (authError) return authError
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
@@ -38,6 +38,7 @@ export async function GET(request: NextRequest) {
     let query = supabase
       .from('contracts')
       .select('*', { count: 'exact' })
+      .eq('user_id', userId)
       .order('created_at', { ascending: false })
 
     if (status) {

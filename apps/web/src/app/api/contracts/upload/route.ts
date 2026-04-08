@@ -183,11 +183,9 @@ function buildAlerts(
   return alerts
 }
 
-const DEMO_USER_ID = '00000000-0000-0000-0000-000000000001'
-
 export async function POST(request: NextRequest) {
   try {
-    const { error: authError } = await requireAuth()
+    const { userId, error: authError } = await requireAuth()
     if (authError) return authError
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
@@ -299,7 +297,7 @@ export async function POST(request: NextRequest) {
       raw_text: contractText,
       ai_summary: parsed.ai_summary ?? null,
       improvement_tips: parsed.improvement_tips ?? [],
-      user_id: isDemo ? DEMO_USER_ID : null,
+      user_id: userId,
     }
 
     const { data: contractData, error: contractError } = await supabase

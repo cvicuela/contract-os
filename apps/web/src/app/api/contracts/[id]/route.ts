@@ -55,7 +55,7 @@ export async function GET(
   context: RouteContext
 ) {
   try {
-    const { error: authError } = await requireAuth()
+    const { userId, error: authError } = await requireAuth()
     if (authError) return authError
 
     const { id } = await context.params
@@ -72,6 +72,7 @@ export async function GET(
         .from('contracts')
         .select('*')
         .eq('id', id)
+        .eq('user_id', userId)
         .single(),
       supabase
         .from('obligations')
@@ -121,7 +122,7 @@ export async function DELETE(
   context: RouteContext
 ) {
   try {
-    const { error: authError } = await requireAuth()
+    const { userId, error: authError } = await requireAuth()
     if (authError) return authError
 
     const { id } = await context.params
@@ -137,6 +138,7 @@ export async function DELETE(
       .from('contracts')
       .delete()
       .eq('id', id)
+      .eq('user_id', userId)
 
     if (deleteError) {
       console.error('Supabase error deleting contract:', deleteError)

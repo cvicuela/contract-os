@@ -9,7 +9,7 @@ const SUPABASE_KEY = process.env.SUPABASE_KEY!
 
 export async function GET() {
   try {
-    const { error: authError } = await requireAuth()
+    const { userId, error: authError } = await requireAuth()
     if (authError) return authError
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
@@ -17,6 +17,7 @@ export async function GET() {
     const { data: contracts, error } = await supabase
       .from('contracts')
       .select('name, status, type, risk_score, end_date, total_value, price_per_unit, unit_type')
+      .eq('user_id', userId)
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })

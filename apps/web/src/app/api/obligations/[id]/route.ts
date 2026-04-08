@@ -11,7 +11,7 @@ type RouteContext = { params: Promise<{ id: string }> }
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
-    const { error: authError } = await requireAuth()
+    const { userId, error: authError } = await requireAuth()
     if (authError) return authError
 
     const { id } = await context.params
@@ -27,6 +27,19 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
+
+    // Verify the obligation belongs to the user
+    const { data: ownerCheck } = await supabase
+      .from('obligations')
+      .select('id, contracts!inner(user_id)')
+      .eq('id', id)
+      .eq('contracts.user_id', userId)
+      .single()
+
+    if (!ownerCheck) {
+      return NextResponse.json({ error: 'Obligation not found' }, { status: 404 })
+    }
+
     const update: Record<string, string> = {}
 
     if (status) {

@@ -2,7 +2,7 @@ export const runtime = 'nodejs'
 
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { auth } from '@/auth'
+import { requireAuth } from '@/lib/api-auth'
 
 const SUPABASE_URL = process.env.SUPABASE_URL!
 const SUPABASE_KEY = process.env.SUPABASE_KEY!
@@ -15,15 +15,13 @@ interface ObligationRow {
   next_due_date: string
   status: string
   risk_level: string
-  contracts: { name: string } | null
+  contracts: { name: string; user_id: string } | null
 }
 
 export async function GET() {
   try {
-    const session = await auth()
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const { userId, error: authError } = await requireAuth()
+    if (authError) return authError
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 
@@ -39,10 +37,12 @@ export async function GET() {
         next_due_date,
         status,
         risk_level,
-        contracts (
-          name
+        contracts!inner (
+          name,
+          user_id
         )
       `)
+      .eq('contracts.user_id', userId)
       .lt('next_due_date', now)
       .eq('status', 'pending')
       .order('next_due_date', { ascending: true })

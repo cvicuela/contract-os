@@ -23,14 +23,15 @@ interface Alert {
 
 export async function GET() {
   try {
-    const { error: authError } = await requireAuth()
+    const { userId, error: authError } = await requireAuth()
     if (authError) return authError
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 
     const { data, error } = await supabase
       .from('alerts')
-      .select(`id, contract_id, message, severity, trigger_date, status, snoozed_until, created_at, contracts(name, end_date)`)
+      .select(`id, contract_id, message, severity, trigger_date, status, snoozed_until, created_at, contracts!inner(name, end_date, user_id)`)
+      .eq('contracts.user_id', userId)
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -76,7 +77,7 @@ export async function GET() {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const { error: authError } = await requireAuth()
+    const { userId, error: authError } = await requireAuth()
     if (authError) return authError
 
     const body = await request.json()
@@ -100,6 +101,18 @@ export async function PATCH(request: NextRequest) {
     }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
+
+    // Verify the alert belongs to the user before updating
+    const { data: alertCheck } = await supabase
+      .from('alerts')
+      .select('id, contracts!inner(user_id)')
+      .eq('id', id)
+      .eq('contracts.user_id', userId)
+      .single()
+
+    if (!alertCheck) {
+      return NextResponse.json({ error: 'Alert not found' }, { status: 404 })
+    }
 
     const { data, error } = await supabase
       .from('alerts')

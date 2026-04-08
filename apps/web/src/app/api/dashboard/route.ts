@@ -34,10 +34,10 @@ export async function GET() {
       supabase.from('contracts').select('*', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'active'),
       supabase.from('contracts').select('*', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'active').gte('end_date', nowIso).lte('end_date', thirtyDaysIso),
       supabase.from('contracts').select('*', { count: 'exact', head: true }).eq('user_id', userId).gte('risk_score', 7),
-      supabase.from('alerts').select('*', { count: 'exact', head: true }).eq('status', 'unread'),
-      supabase.from('obligations').select('*', { count: 'exact', head: true }).or(`status.eq.overdue,and(next_due_date.lt.${nowIso},status.eq.pending)`),
+      supabase.from('alerts').select('*, contracts!inner(user_id)', { count: 'exact', head: true }).eq('contracts.user_id', userId).eq('status', 'unread'),
+      supabase.from('obligations').select('*, contracts!inner(user_id)', { count: 'exact', head: true }).eq('contracts.user_id', userId).or(`status.eq.overdue,and(next_due_date.lt.${nowIso},status.eq.pending)`),
       supabase.from('contracts').select('id,name,type,party_a,party_b,start_date,end_date,renewal_type,notice_days,risk_score,status,file_url,ai_summary,created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(5),
-      supabase.from('alerts').select('id,contract_id,message,severity,trigger_date,status,created_at').eq('status', 'unread').order('trigger_date', { ascending: true }).limit(6),
+      supabase.from('alerts').select('id,contract_id,message,severity,trigger_date,status,created_at, contracts!inner(user_id)').eq('contracts.user_id', userId).eq('status', 'unread').order('trigger_date', { ascending: true }).limit(6),
     ])
 
     const stats = {

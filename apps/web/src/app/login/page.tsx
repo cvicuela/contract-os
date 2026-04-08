@@ -327,7 +327,7 @@ export default function LoginPage() {
             <p className="text-sm text-slate-400">Custom contracts, SSO, SLA, API access, and a dedicated account manager.</p>
           </div>
           <a
-            href="mailto:hello@contractos.ai"
+            href="mailto:carlos@mynameisaro.com"
             className="shrink-0 text-sm font-medium border border-slate-600 text-white px-5 py-2.5 rounded-xl hover:bg-slate-700 transition-colors"
           >
             Contact us
@@ -346,7 +346,7 @@ export default function LoginPage() {
           ContractOS &copy; 2026 · Contract Intelligence Platform
         </div>
         <div className="flex items-center gap-4 text-gray-600">
-          <a href="mailto:hello@contractos.ai" className="hover:text-gray-400 transition-colors">Contact</a>
+          <a href="mailto:carlos@mynameisaro.com" className="hover:text-gray-400 transition-colors">Contact</a>
           <span>·</span>
           <span>Powered by Claude AI</span>
         </div>

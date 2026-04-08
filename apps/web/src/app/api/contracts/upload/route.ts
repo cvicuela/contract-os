@@ -125,21 +125,29 @@ async function parseContractWithClaude(
   const basicInfo = extractBasicInfo(text, contractName)
 
   // Step 2: Single Haiku call — refine the pre-extracted JSON + short contract snippet
-  // This uses far fewer tokens than sending the full 30k contract text
   const refineMsg = await anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
-    max_tokens: 2048,
+    max_tokens: 4096,
     system: EXTRACT_PROMPT,
     messages: [
       {
         role: 'user',
-        content: `Pre-extracted data (fix errors, fill gaps, add obligations and improvement_tips):\n${JSON.stringify(basicInfo)}\n\nContract text:\n${text.slice(0, 8_000)}`,
+        content: `Pre-extracted data (fix errors, fill gaps, add obligations and improvement_tips):\n${JSON.stringify(basicInfo)}\n\nContract text:\n${text.slice(0, 12_000)}`,
       },
     ],
   })
 
   const raw = refineMsg.content[0].type === 'text' ? refineMsg.content[0].text : ''
-  const finalJson = stripFences(raw)
+  let finalJson = stripFences(raw)
+
+  // If JSON was truncated (stop_reason == max_tokens), try to repair it
+  if (refineMsg.stop_reason === 'max_tokens') {
+    // Close any open strings/arrays/objects
+    finalJson = finalJson.replace(/,\s*$/, '')
+    const openBrackets = (finalJson.match(/\[/g) || []).length - (finalJson.match(/\]/g) || []).length
+    const openBraces = (finalJson.match(/\{/g) || []).length - (finalJson.match(/\}/g) || []).length
+    finalJson += ']'.repeat(Math.max(0, openBrackets)) + '}'.repeat(Math.max(0, openBraces))
+  }
 
   const parsed: ParsedContractData = JSON.parse(finalJson)
   return parsed
@@ -295,6 +303,15 @@ export async function POST(request: NextRequest) {
         )
       }
 
+      const ALLOWED_EXTENSIONS = ['.pdf', '.doc', '.docx', '.txt', '.rtf', '.odt']
+      const fileExt = file.name.toLowerCase().replace(/^.*(\.[^.]+)$/, '$1')
+      if (!ALLOWED_EXTENSIONS.includes(fileExt)) {
+        return NextResponse.json(
+          { error: 'Tipo de archivo no soportado. Usa PDF, DOC, DOCX o TXT.' },
+          { status: 400 }
+        )
+      }
+
       contractName = nameField
         ? String(nameField)
         : file.name.replace(/\.[^/.]+$/, '')
@@ -349,7 +366,7 @@ export async function POST(request: NextRequest) {
       console.error('Claude error stack:', claudeErr instanceof Error ? claudeErr.stack : 'no stack')
       aiFailed = true
       parsed = extractBasicInfo(contractText, contractName)
-      parsed.ai_summary = `Análisis básico (sin IA). Error: ${errMsg.slice(0, 200)}. Sube el contrato nuevamente.`
+      parsed.ai_summary = 'Análisis básico (sin IA). Sube el contrato nuevamente para un análisis completo con Claude AI.'
     }
 
     // ── Insert contract ───────────────────────────────────────────────────────

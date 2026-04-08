@@ -23,8 +23,13 @@ export async function POST(request: NextRequest) {
   try {
     const { planId, email } = (await request.json()) as { planId: string; email?: string }
 
-    if (!planId) {
-      return NextResponse.json({ error: 'planId is required' }, { status: 400 })
+    const ALLOWED_PLAN_IDS = [
+      process.env.PAYPAL_STARTER_PLAN_ID,
+      process.env.PAYPAL_PRO_PLAN_ID,
+    ].filter(Boolean)
+
+    if (!planId || !ALLOWED_PLAN_IDS.includes(planId)) {
+      return NextResponse.json({ error: 'Invalid plan' }, { status: 400 })
     }
 
     const accessToken = await getAccessToken()

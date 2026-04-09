@@ -273,19 +273,19 @@ export default function LoginPage() {
 
       {/* ── Features ── */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 pb-20">
-        <div className="text-center mb-12">
-          <h2 className="text-2xl font-bold mb-3">{t.login.featuresTitle}</h2>
-          <p className="text-gray-400 text-sm">{t.login.featuresSubtitle}</p>
+        <div className="text-center mb-14">
+          <h2 className="text-3xl font-bold mb-3">{t.login.featuresTitle}</h2>
+          <p className="text-gray-400 text-base">{t.login.featuresSubtitle}</p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {FEATURE_KEYS.map((key, i) => (
-            <div key={key} className="flex items-start gap-4 sm:block bg-white/5 border border-white/8 rounded-xl p-4 sm:p-5 hover:bg-white/8 transition-colors">
-              <div className="w-10 h-10 sm:w-9 sm:h-9 bg-indigo-500/15 rounded-lg flex items-center justify-center text-indigo-400 shrink-0 sm:mb-4">
+            <div key={key} className="flex items-start gap-4 sm:block bg-white/5 border border-white/8 rounded-xl p-5 sm:p-6 hover:bg-white/8 transition-colors">
+              <div className="w-11 h-11 sm:w-10 sm:h-10 bg-indigo-500/15 rounded-lg flex items-center justify-center text-indigo-400 shrink-0 sm:mb-4">
                 {FEATURE_ICONS[i]}
               </div>
               <div className="min-w-0">
-                <h3 className="font-semibold text-sm mb-0.5 sm:mb-1.5">{t.login.features[key].title}</h3>
-                <p className="text-xs text-gray-400 leading-relaxed">{t.login.features[key].desc}</p>
+                <h3 className="font-semibold text-base mb-1 sm:mb-2">{t.login.features[key].title}</h3>
+                <p className="text-sm text-gray-400 leading-relaxed">{t.login.features[key].desc}</p>
               </div>
             </div>
           ))}
@@ -295,8 +295,8 @@ export default function LoginPage() {
       {/* ── Pricing ── */}
       <section id="pricing" className="max-w-6xl mx-auto px-4 sm:px-6 pb-24">
         <div className="text-center mb-12">
-          <h2 className="text-2xl font-bold mb-3">{t.login.pricingTitle}</h2>
-          <p className="text-gray-400 text-sm">{t.login.pricingSubtitle}</p>
+          <h2 className="text-3xl font-bold mb-3">{t.login.pricingTitle}</h2>
+          <p className="text-gray-400 text-base">{t.login.pricingSubtitle}</p>
         </div>
 
         <div className="flex items-center justify-center gap-3 mb-8">

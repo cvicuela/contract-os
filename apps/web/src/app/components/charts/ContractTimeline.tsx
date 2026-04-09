@@ -26,7 +26,7 @@ interface ContractTimelineProps {
   obligations: Array<{ next_due_date: string; status: string }>
 }
 
-type ViewMode = 'value' | 'price' | 'risk'
+type ViewMode = 'value' | 'price' | 'renewals'
 
 function formatCurrency(n: number) {
   if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`
@@ -61,9 +61,10 @@ export default function ContractTimeline({
       label: string
       value: number
       price: number
-      risk: number
+      renewalPrice: number
       isNow: boolean
       hasObligation: boolean
+      isRenewalYear: boolean
     }> = []
 
     const now = new Date()
@@ -94,9 +95,14 @@ export default function ContractTimeline({
       cumulativeValue += escalatedMonthlyValue
       currentPrice = hasPrice ? pricePerUnit * escalationMultiplier : 0
 
-      // Risk decays slightly over time as contract matures, spikes near end
-      const progress = i / Math.max(totalMonths, 1)
-      const timeRisk = progress > 0.8 ? riskScore * (1 + (progress - 0.8) * 2) : riskScore * (0.85 + progress * 0.15)
+      // Renewal year price: annual escalation compounded per year
+      const yearIndex = Math.floor(i / 12)
+      const annualMultiplier = Math.pow(1 + rate / 100, yearIndex)
+      const baseAnnualPrice = hasFinancials
+        ? (totalValue / Math.max(totalMonths / 12, 1))
+        : hasPrice ? pricePerUnit * 12 : 0
+      const renewalPrice = baseAnnualPrice * annualMultiplier
+      const isRenewalYear = i > 0 && i % 12 === 0
 
       const monthKey = `${d.getFullYear()}-${d.getMonth()}`
       const isCurrentMonth = d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()
@@ -106,23 +112,26 @@ export default function ContractTimeline({
         label: d.toLocaleDateString(dateLocale, { month: 'short', year: '2-digit' }),
         value: Math.round(cumulativeValue),
         price: Math.round(currentPrice * 100) / 100,
-        risk: Math.round(Math.min(timeRisk, 10) * 10) / 10,
+        renewalPrice: Math.round(renewalPrice),
         isNow: isCurrentMonth,
         hasObligation: obligationMonths.has(monthKey),
+        isRenewalYear,
       })
     }
 
     return months
-  }, [startDate, endDate, totalValue, pricePerUnit, rate, riskScore, obligations, dateLocale, hasFinancials, hasPrice])
+  }, [startDate, endDate, totalValue, pricePerUnit, rate, obligations, dateLocale, hasFinancials, hasPrice])
 
   if (timelineData.length < 2) return null
 
   const nowIndex = timelineData.findIndex((d) => d.isNow)
 
+  const hasRenewals = hasFinancials || hasPrice
+
   const views: { key: ViewMode; label: string; available: boolean }[] = [
     { key: 'value', label: t.contractTimeline?.value ?? 'Cumulative Value', available: hasFinancials },
     { key: 'price', label: t.contractTimeline?.priceUnit ?? `Price/${unitType === 'm2' ? 'm²' : 'sqft'}`, available: hasPrice },
-    { key: 'risk', label: t.contractTimeline?.riskOverTime ?? 'Risk Over Time', available: true },
+    { key: 'renewals', label: t.contractTimeline?.renewals ?? 'Price by Renewal', available: hasRenewals },
   ]
 
   const availableViews = views.filter((v) => v.available)
@@ -158,20 +167,28 @@ export default function ContractTimeline({
       )}
 
       <ResponsiveContainer width="100%" height={260}>
-        {activeView === 'risk' ? (
-          <LineChart data={timelineData}>
+        {activeView === 'renewals' ? (
+          <AreaChart data={timelineData}>
+            <defs>
+              <linearGradient id="renewalGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.3} />
+                <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.02} />
+              </linearGradient>
+            </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
             <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#6b7280' }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
-            <YAxis domain={[0, 10]} tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} />
+            <YAxis tickFormatter={formatCurrency} tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} />
             <Tooltip
               content={({ active, payload, label }) => {
                 if (!active || !payload?.length) return null
+                const val = payload[0].value as number
+                const point = payload[0].payload as { isRenewalYear: boolean }
                 return (
                   <div className="bg-white border border-gray-200 rounded-lg shadow-lg px-3 py-2 text-xs">
                     <p className="font-medium text-gray-900">{label}</p>
-                    <p className="text-gray-600">{t.table?.riskScore ?? 'Risk'}: {payload[0].value}/10</p>
-                    {payload[0].payload?.hasObligation && (
-                      <p className="text-amber-600 font-medium">{t.contractTimeline?.obligationDue ?? 'Obligation due'}</p>
+                    <p className="text-gray-600">{t.contractTimeline?.renewals ?? 'Annual price'}: ${val.toLocaleString()}</p>
+                    {point?.isRenewalYear && (
+                      <p className="text-violet-600 font-medium">{t.contractTimeline?.renewal ?? 'Renewal'}</p>
                     )}
                   </div>
                 )
@@ -180,8 +197,12 @@ export default function ContractTimeline({
             {nowIndex >= 0 && (
               <ReferenceLine x={timelineData[nowIndex].label} stroke="#6366f1" strokeDasharray="4 4" label={{ value: t.contractTimeline?.today ?? 'Today', position: 'top', fontSize: 10, fill: '#6366f1' }} />
             )}
-            <Line type="monotone" dataKey="risk" stroke="#ef4444" strokeWidth={2} dot={false} />
-          </LineChart>
+            {/* Renewal year markers */}
+            {timelineData.filter(d => d.isRenewalYear).map(d => (
+              <ReferenceLine key={d.date} x={d.label} stroke="#8b5cf6" strokeDasharray="3 3" strokeOpacity={0.5} />
+            ))}
+            <Area type="stepAfter" dataKey="renewalPrice" stroke="#8b5cf6" strokeWidth={2} fill="url(#renewalGrad)" />
+          </AreaChart>
         ) : (
           <AreaChart data={timelineData}>
             <defs>

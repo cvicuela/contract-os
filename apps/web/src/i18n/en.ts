@@ -267,6 +267,32 @@ const en = {
     upgradePlan: 'Upgrade plan',
     signOut: 'Sign out',
     openMenu: 'Open user menu',
+    settings: 'AI Settings',
+  },
+
+  // Settings
+  settings: {
+    title: 'Settings',
+    subtitle: 'Manage your AI configuration and preferences',
+    aiConfig: 'AI Configuration',
+    aiProvider: 'AI Provider',
+    apiKey: 'API Key',
+    apiKeyPlaceholder: 'Paste your API key here',
+    saveKey: 'Save Key',
+    deleteKey: 'Remove',
+    noKeyConfigured: 'No AI key configured',
+    keyConfigured: 'Key configured',
+    keyHint: 'Key ending in {hint}',
+    encryptionNote: 'Your key is stored encrypted and never visible after saving.',
+    providerAnthropic: 'Anthropic Claude',
+    providerOpenAI: 'OpenAI GPT',
+    providerGemini: 'Google Gemini',
+    keySaved: 'API key saved successfully',
+    keyDeleted: 'API key removed',
+    keyError: 'Failed to save API key',
+    getKeyHelp: 'Get your API key',
+    basicAnalysisNote: 'Contracts will be uploaded with basic analysis only. Add a key for full AI analysis.',
+    configureKeyPrompt: 'Configure your AI key in Settings for full AI-powered analysis.',
   },
 
   // Modals

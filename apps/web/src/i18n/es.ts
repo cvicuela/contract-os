@@ -269,6 +269,32 @@ const es: Translations = {
     upgradePlan: 'Mejorar plan',
     signOut: 'Cerrar sesi\u00f3n',
     openMenu: 'Abrir men\u00fa de usuario',
+    settings: 'Ajustes de IA',
+  },
+
+  // Settings
+  settings: {
+    title: 'Ajustes',
+    subtitle: 'Configura tu IA y preferencias',
+    aiConfig: 'Configuraci\u00f3n de IA',
+    aiProvider: 'Proveedor de IA',
+    apiKey: 'Clave API',
+    apiKeyPlaceholder: 'Pega tu clave API aqu\u00ed',
+    saveKey: 'Guardar Clave',
+    deleteKey: 'Eliminar',
+    noKeyConfigured: 'No hay clave de IA configurada',
+    keyConfigured: 'Clave configurada',
+    keyHint: 'Clave terminada en {hint}',
+    encryptionNote: 'Tu clave se almacena encriptada y no es visible despu\u00e9s de guardarla.',
+    providerAnthropic: 'Anthropic Claude',
+    providerOpenAI: 'OpenAI GPT',
+    providerGemini: 'Google Gemini',
+    keySaved: 'Clave API guardada exitosamente',
+    keyDeleted: 'Clave API eliminada',
+    keyError: 'Error al guardar la clave API',
+    getKeyHelp: 'Obtener tu clave API',
+    basicAnalysisNote: 'Los contratos se subir\u00e1n solo con an\u00e1lisis b\u00e1sico. Agrega una clave para an\u00e1lisis completo con IA.',
+    configureKeyPrompt: 'Configura tu clave de IA en Ajustes para an\u00e1lisis completo.',
   },
 
   // Modals

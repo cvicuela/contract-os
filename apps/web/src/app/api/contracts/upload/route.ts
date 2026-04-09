@@ -4,10 +4,11 @@ export const maxDuration = 60
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { requireAuth } from '@/lib/api-auth'
+import { decrypt } from '@/lib/encrypt'
+import { parseContractWithAI, type ParsedContractData, type AIProvider } from '@/lib/ai-providers'
 
 const SUPABASE_URL = process.env.SUPABASE_URL!
 const SUPABASE_KEY = process.env.SUPABASE_KEY!
-const CLAUDE_API_KEY = process.env.ANTHROPIC_API_KEY!
 
 interface Contract {
   id: string
@@ -50,39 +51,6 @@ interface Alert {
   created_at: string
 }
 
-interface ParsedContractData {
-  name?: string
-  type?: string
-  party_a?: string
-  party_b?: string
-  start_date?: string
-  end_date?: string
-  renewal_type?: string
-  notice_days?: number
-  risk_score?: number
-  status?: 'active' | 'expired' | 'pending' | 'cancelled'
-  ai_summary?: string
-  improvement_tips?: string[]
-  obligations?: Array<{
-    title: string
-    description?: string
-    responsible_party?: string
-    due_date?: string
-    next_due_date?: string
-    frequency?: string
-    status?: 'pending' | 'completed' | 'overdue'
-  }>
-}
-
-const EXTRACT_PROMPT = `Eres un analista de contratos. Responde SOLO con un objeto JSON válido — sin markdown, sin explicación. IMPORTANTE: ai_summary, improvement_tips y obligations DEBEN estar en español.
-
-Schema:
-{"name":string,"type":string,"party_a":string,"party_b":string,"start_date":"YYYY-MM-DD|null","end_date":"YYYY-MM-DD|null","renewal_type":"auto-renewal|manual|evergreen|none","notice_days":integer,"risk_score":1-10,"status":"active|expired|pending|cancelled","ai_summary":"2-3 oraciones en español","improvement_tips":["string (consejo accionable en español)"],"obligations":[{"title":string,"description":string,"responsible_party":string,"due_date":"YYYY-MM-DD|null","next_due_date":"YYYY-MM-DD|null","frequency":"one-time|monthly|quarterly|annually|null","status":"pending|completed|overdue"}]}
-
-Reglas: null para strings desconocidos, 0 para números desconocidos. risk_score: considera exposición financiera, sensibilidad de datos, complejidad de terminación.
-improvement_tips: proporciona 4-7 puntos específicos y accionables EN ESPAÑOL que harían este contrato un 10/10 perfecto. Cada tip debe identificar una brecha o debilidad concreta encontrada en este contrato y explicar exactamente cómo corregirla (ej. "Agregar una cláusula de fuerza mayor que cubra pandemia, desastre natural y ciberataques" no "Agregar cláusulas faltantes"). Enfócate en: cláusulas protectoras faltantes, lenguaje vago, brechas de responsabilidad, propiedad intelectual, privacidad de datos, resolución de disputas, derechos de terminación, indemnización y términos de renovación.`
-
-
 async function extractTextFromBuffer(buffer: Buffer, mimeType: string, fileName: string): Promise<string> {
   const ext = fileName.toLowerCase().replace(/^.*\./, '.')
 
@@ -108,49 +76,6 @@ async function extractTextFromBuffer(buffer: Buffer, mimeType: string, fileName:
 
   // .txt or other plain text
   return buffer.toString('utf8')
-}
-
-function stripFences(text: string): string {
-  return text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
-}
-
-async function parseContractWithClaude(
-  text: string,
-  contractName: string
-): Promise<ParsedContractData> {
-  const { default: Anthropic } = await import('@anthropic-ai/sdk')
-  const anthropic = new Anthropic({ apiKey: CLAUDE_API_KEY })
-
-  // Step 1: Extract basic info locally (instant, zero tokens)
-  const basicInfo = extractBasicInfo(text, contractName)
-
-  // Step 2: Single Haiku call — refine the pre-extracted JSON + short contract snippet
-  const refineMsg = await anthropic.messages.create({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 4096,
-    system: EXTRACT_PROMPT,
-    messages: [
-      {
-        role: 'user',
-        content: `Pre-extracted data (fix errors, fill gaps, add obligations and improvement_tips):\n${JSON.stringify(basicInfo)}\n\nContract text:\n${text.slice(0, 12_000)}`,
-      },
-    ],
-  })
-
-  const raw = refineMsg.content[0].type === 'text' ? refineMsg.content[0].text : ''
-  let finalJson = stripFences(raw)
-
-  // If JSON was truncated (stop_reason == max_tokens), try to repair it
-  if (refineMsg.stop_reason === 'max_tokens') {
-    // Close any open strings/arrays/objects
-    finalJson = finalJson.replace(/,\s*$/, '')
-    const openBrackets = (finalJson.match(/\[/g) || []).length - (finalJson.match(/\]/g) || []).length
-    const openBraces = (finalJson.match(/\{/g) || []).length - (finalJson.match(/\}/g) || []).length
-    finalJson += ']'.repeat(Math.max(0, openBrackets)) + '}'.repeat(Math.max(0, openBraces))
-  }
-
-  const parsed: ParsedContractData = JSON.parse(finalJson)
-  return parsed
 }
 
 function extractBasicInfo(text: string, contractName: string): ParsedContractData {
@@ -348,20 +273,41 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // ── Parse with Claude (with fallback) ──────────────────────────────────────
+    // ── Fetch user's AI key ──────────────────────────────────────────────────
+    let aiProvider: AIProvider | null = null
+    let userApiKey: string | null = null
+    try {
+      const { data: userData } = await supabase
+        .from('users')
+        .select('ai_provider, ai_api_key_encrypted')
+        .eq('id', userId)
+        .single()
+      if (userData?.ai_provider && userData?.ai_api_key_encrypted) {
+        aiProvider = userData.ai_provider as AIProvider
+        userApiKey = decrypt(userData.ai_api_key_encrypted)
+      }
+    } catch {
+      // Could not fetch user AI config — will use basic fallback
+    }
+
+    // ── Parse with AI or basic fallback ──────────────────────────────────────
     let parsed: ParsedContractData
     let aiFailed = false
-    try {
-      parsed = await parseContractWithClaude(contractText, contractName)
-    } catch (claudeErr) {
-      const errMsg = claudeErr instanceof Error
-        ? `${claudeErr.name}: ${claudeErr.message}`
-        : String(claudeErr)
-      console.error('Claude parsing error — using basic fallback:', errMsg)
-      console.error('Claude error stack:', claudeErr instanceof Error ? claudeErr.stack : 'no stack')
-      aiFailed = true
-      parsed = extractBasicInfo(contractText, contractName)
-      parsed.ai_summary = 'Análisis básico (sin IA). Sube el contrato nuevamente para un análisis completo con Claude AI.'
+    const basicInfo = extractBasicInfo(contractText, contractName)
+
+    if (aiProvider && userApiKey) {
+      try {
+        parsed = await parseContractWithAI(contractText, contractName, aiProvider, userApiKey, basicInfo)
+      } catch (aiErr) {
+        const errMsg = aiErr instanceof Error ? `${aiErr.name}: ${aiErr.message}` : String(aiErr)
+        console.error(`AI parsing error (${aiProvider}) — using basic fallback:`, errMsg)
+        aiFailed = true
+        parsed = basicInfo
+        parsed.ai_summary = 'Error al analizar con IA. Verifica tu clave API en Ajustes.'
+      }
+    } else {
+      parsed = basicInfo
+      parsed.ai_summary = 'Análisis básico. Configura tu clave de IA en Ajustes para análisis completo con IA.'
     }
 
     // ── Insert contract ───────────────────────────────────────────────────────
@@ -443,7 +389,14 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { contract, obligations, alerts, ...(aiFailed && { warning: 'Claude AI no disponible — se guardó con análisis básico' }) },
+      {
+        contract,
+        obligations,
+        alerts,
+        aiProvider,
+        ...(aiFailed && { warning: 'Error de IA — se guardó con análisis básico' }),
+        ...(!aiProvider && { basicOnly: true, warning: 'Sin clave de IA configurada — análisis básico' }),
+      },
       { status: 201 }
     )
   } catch (err) {

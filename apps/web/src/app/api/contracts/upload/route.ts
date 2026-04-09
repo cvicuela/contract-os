@@ -458,8 +458,9 @@ export async function POST(request: NextRequest) {
 
     if (contractError || !contractData) {
       console.error('Supabase contract insert error:', contractError)
+      console.error('Insert payload:', JSON.stringify(contractInsert, null, 2))
       return NextResponse.json(
-        { error: 'Failed to store contract in database' },
+        { error: 'Failed to store contract in database', detail: contractError?.message ?? 'unknown' },
         { status: 500 }
       )
     }

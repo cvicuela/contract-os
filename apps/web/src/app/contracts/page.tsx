@@ -75,6 +75,7 @@ export default function ContractsPage() {
   const [uploadSuccess, setUploadSuccess] = useState<Contract | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [aiKeyInfo, setAiKeyInfo] = useState<{ provider: string | null; keyHint: string | null }>({ provider: null, keyHint: null });
 
   const fetchContracts = () => {
     setLoading(true);
@@ -87,6 +88,7 @@ export default function ContractsPage() {
 
   useEffect(() => {
     fetchContracts();
+    fetch('/api/user/ai-key').then(r => r.json()).then(setAiKeyInfo).catch(() => {});
   }, []);
 
   const filtered = contracts.filter((c) => {
@@ -550,23 +552,55 @@ export default function ContractsPage() {
               )}
 
               {!uploadSuccess && (
-                <button
-                  onClick={handleUpload}
-                  disabled={uploading}
-                  className="w-full py-2.5 text-sm font-semibold rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
-                >
-                  {uploading ? (
-                    <>
-                      <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                <>
+                  {!aiKeyInfo.provider && (
+                    <Link
+                      href="/settings"
+                      className="flex items-center gap-2 text-xs text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-lg px-3.5 py-2.5 hover:bg-indigo-100 transition-colors"
+                    >
+                      <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
-                      {t.upload.analyzing}
-                    </>
-                  ) : (
-                    t.upload.analyzeButton
+                      {t.settings.configureKeyPrompt}
+                    </Link>
                   )}
-                </button>
+                  <button
+                    onClick={handleUpload}
+                    disabled={uploading}
+                    className="w-full py-2.5 text-sm font-semibold rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                  >
+                    {uploading ? (
+                      <>
+                        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                        {t.upload.analyzing}
+                      </>
+                    ) : aiKeyInfo.provider ? (
+                      <>
+                        {aiKeyInfo.provider === 'anthropic' && (
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M17.304 3.541l-5.357 16.918H8.696L3.34 3.541h3.63l3.467 11.378L13.904 3.54h3.4zM20.66 3.541L15.305 20.46h-2.36l1.674-5.283 3.584-11.635h2.458z"/></svg>
+                        )}
+                        {aiKeyInfo.provider === 'openai' && (
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M22.282 9.821a5.985 5.985 0 00-.516-4.91 6.046 6.046 0 00-6.51-2.9A6.065 6.065 0 0011.5.5a6.04 6.04 0 00-5.753 4.218 5.99 5.99 0 00-4.006 2.907A6.05 6.05 0 002.48 13.5a5.98 5.98 0 00.516 4.911 6.05 6.05 0 006.51 2.9A6.04 6.04 0 0013.5 23.5a6.04 6.04 0 005.753-4.218 5.98 5.98 0 004.006-2.907 6.04 6.04 0 00-.977-6.554z"/></svg>
+                        )}
+                        {aiKeyInfo.provider === 'gemini' && (
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 24A14.3 14.3 0 000 12 14.3 14.3 0 0012 0a14.3 14.3 0 0012 12 14.3 14.3 0 00-12 12z"/></svg>
+                        )}
+                        {t.upload.analyzeButton}
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                        </svg>
+                        {t.upload.analyzeButton}
+                      </>
+                    )}
+                  </button>
+                </>
               )}
             </div>
           </div>

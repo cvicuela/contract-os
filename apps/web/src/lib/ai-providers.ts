@@ -19,6 +19,10 @@ export interface ParsedContractData {
   status?: 'active' | 'expired' | 'pending' | 'cancelled'
   ai_summary?: string
   improvement_tips?: string[]
+  total_value?: number
+  price_per_unit?: number
+  unit_type?: string
+  escalation_rate?: number
   obligations?: Array<{
     title: string
     description?: string

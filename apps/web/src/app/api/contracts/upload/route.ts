@@ -79,54 +79,167 @@ async function extractTextFromBuffer(buffer: Buffer, mimeType: string, fileName:
 }
 
 function extractBasicInfo(text: string, contractName: string): ParsedContractData {
-  const snippet = text.slice(0, 10_000).toLowerCase()
+  const snippet = text.slice(0, 15_000)
+  const lower = snippet.toLowerCase()
 
-  // Try to detect contract type
+  // ── Contract type detection (ES + EN) ──────────────────────────────────
   const typePatterns: [RegExp, string][] = [
-    [/\b(arrendamiento|alquiler|renta)\b/, 'Arrendamiento'],
-    [/\b(servicio|servicios profesionales)\b/, 'Servicios'],
-    [/\b(compraventa|compra[- ]?venta)\b/, 'Compraventa'],
-    [/\b(confidencialidad|nda|non[- ]?disclosure)\b/, 'NDA'],
-    [/\b(laboral|empleo|trabajo)\b/, 'Laboral'],
-    [/\b(préstamo|prestamo|crédito|credito)\b/, 'Préstamo'],
-    [/\b(licencia|uso de software)\b/, 'Licencia'],
+    [/\b(arrendamiento|alquiler|renta|lease|rental)\b/i, 'Arrendamiento'],
+    [/\b(servicio|servicios profesionales|service agreement)\b/i, 'Servicios'],
+    [/\b(compraventa|compra[- ]?venta|purchase|sale agreement)\b/i, 'Compraventa'],
+    [/\b(confidencialidad|nda|non[- ]?disclosure)\b/i, 'NDA'],
+    [/\b(laboral|empleo|trabajo|employment)\b/i, 'Laboral'],
+    [/\b(préstamo|prestamo|crédito|credito|loan)\b/i, 'Préstamo'],
+    [/\b(licencia|uso de software|license|saas|subscription)\b/i, 'Licencia'],
+    [/\b(suministro|supply|distribuci[oó]n|distribution)\b/i, 'Suministro'],
+    [/\b(consultor[ií]a|consulting|asesor[ií]a|advisory)\b/i, 'Consultoría'],
   ]
   let type = 'General'
   for (const [pat, label] of typePatterns) {
-    if (pat.test(snippet)) { type = label; break }
+    if (pat.test(lower)) { type = label; break }
   }
 
-  // Extract dates (DD/MM/YYYY, DD-MM-YYYY, YYYY-MM-DD, or written dates)
-  const dateRegex = /(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/g
+  // ── Date extraction (multiple formats) ──────────────────────────────────
   const dates: Date[] = []
+
+  // DD/MM/YYYY or DD-MM-YYYY
+  const dmyRegex = /(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/g
   let m
-  while ((m = dateRegex.exec(text.slice(0, 10_000))) !== null) {
+  while ((m = dmyRegex.exec(snippet)) !== null) {
     const [, a, b, y] = m
     const d = new Date(`${y}-${b.padStart(2, '0')}-${a.padStart(2, '0')}`)
-    if (!isNaN(d.getTime())) dates.push(d)
+    if (!isNaN(d.getTime()) && d.getFullYear() > 2000) dates.push(d)
   }
-  dates.sort((a, b) => a.getTime() - b.getTime())
-  const startDate = dates.length > 0 ? dates[0].toISOString().split('T')[0] : null
-  const endDate = dates.length > 1 ? dates[dates.length - 1].toISOString().split('T')[0] : null
 
-  // Detect parties — look for patterns like "ENTRE: X ... Y: Z"
+  // YYYY-MM-DD (ISO format)
+  const isoRegex = /(\d{4})-(\d{2})-(\d{2})/g
+  while ((m = isoRegex.exec(snippet)) !== null) {
+    const d = new Date(m[0])
+    if (!isNaN(d.getTime()) && d.getFullYear() > 2000) dates.push(d)
+  }
+
+  // Written dates: "1 de enero de 2024", "January 1, 2024"
+  const writtenEs = /(\d{1,2})\s+de\s+(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\s+(?:de\s+)?(\d{4})/gi
+  const esMonths: Record<string, number> = { enero: 0, febrero: 1, marzo: 2, abril: 3, mayo: 4, junio: 5, julio: 6, agosto: 7, septiembre: 8, octubre: 9, noviembre: 10, diciembre: 11 }
+  while ((m = writtenEs.exec(snippet)) !== null) {
+    const month = esMonths[m[2].toLowerCase()]
+    if (month !== undefined) {
+      const d = new Date(parseInt(m[3]), month, parseInt(m[1]))
+      if (!isNaN(d.getTime())) dates.push(d)
+    }
+  }
+
+  dates.sort((a, b) => a.getTime() - b.getTime())
+  // Deduplicate by date string
+  const uniqueDates = [...new Set(dates.map(d => d.toISOString().split('T')[0]))]
+  const startDate = uniqueDates.length > 0 ? uniqueDates[0] : null
+  const endDate = uniqueDates.length > 1 ? uniqueDates[uniqueDates.length - 1] : null
+
+  // ── Party detection (ES + EN, multiple patterns) ───────────────────────
   let partyA = ''
   let partyB = ''
-  const entreMatch = text.match(/(?:entre|between)[:\s]+([^,\n]{3,80})/i)
+
+  // Pattern: "ENTRE: X ... Y: Z" / "between X and Z"
+  const entreMatch = snippet.match(/(?:entre|between)[:\s]+([^,\n]{3,100})/i)
   if (entreMatch) partyA = entreMatch[1].trim()
-  const yMatch = text.match(/(?:\by\b|and)[:\s]+([^,\n]{3,80})/i)
+  const yMatch = snippet.match(/(?:\by\b|\band\b)[:\s]+([^,\n]{3,100})/i)
   if (yMatch && yMatch.index && entreMatch?.index && yMatch.index > entreMatch.index) {
     partyB = yMatch[1].trim()
   }
 
-  // Basic risk score heuristic
-  let riskScore = 5
-  const riskUp = [/penalidad/i, /indemniz/i, /exclusiv/i, /irrevocable/i, /sin límite/i, /responsabilidad ilimitada/i]
-  const riskDown = [/mediación/i, /arbitraje/i, /resolución de conflictos/i, /fuerza mayor/i, /seguro/i]
-  for (const r of riskUp) if (r.test(snippet)) riskScore = Math.min(10, riskScore + 1)
-  for (const r of riskDown) if (r.test(snippet)) riskScore = Math.max(1, riskScore - 1)
+  // Fallback: "Parte A:" / "Party A:" / "El arrendador:" / "El arrendatario:"
+  if (!partyA) {
+    const pA = snippet.match(/(?:parte\s*a|party\s*a|el\s+arrendador|the\s+landlord|el\s+proveedor|el\s+prestador)[:\s]+([^\n,]{3,100})/i)
+    if (pA) partyA = pA[1].trim()
+  }
+  if (!partyB) {
+    const pB = snippet.match(/(?:parte\s*b|party\s*b|el\s+arrendatario|the\s+tenant|el\s+cliente|the\s+client)[:\s]+([^\n,]{3,100})/i)
+    if (pB) partyB = pB[1].trim()
+  }
 
-  // Determine status
+  // Fallback: company patterns (S.A., S.L., LLC, Inc, Corp, SRL)
+  if (!partyA || !partyB) {
+    const companyRegex = /([A-ZÁÉÍÓÚÑ][A-Za-záéíóúñ\s&.]+(?:S\.?A\.?|S\.?L\.?|SRL|LLC|Inc\.?|Corp\.?|Ltd\.?))/g
+    const companies: string[] = []
+    let cm
+    while ((cm = companyRegex.exec(snippet)) !== null) {
+      const name = cm[1].trim()
+      if (name.length > 5 && !companies.includes(name)) companies.push(name)
+      if (companies.length >= 2) break
+    }
+    if (!partyA && companies.length > 0) partyA = companies[0]
+    if (!partyB && companies.length > 1) partyB = companies[1]
+  }
+
+  // ── Price / monetary value extraction ──────────────────────────────────
+  let totalValue: number | undefined
+  let pricePerUnit: number | undefined
+  let unitType: string | undefined
+  let escalationRate: number | undefined
+
+  // Match monetary amounts: $1,234.56 or 1.234,56 EUR or USD 50,000
+  const moneyRegex = /(?:\$|USD|EUR|€)\s?([\d.,]+)|(?:[\d.,]+)\s?(?:USD|EUR|€|\$|pesos|d[oó]lares|euros)/gi
+  const amounts: number[] = []
+  while ((m = moneyRegex.exec(snippet)) !== null) {
+    const raw = m[1] || m[0].replace(/[^\d.,]/g, '')
+    // Handle both 1,234.56 and 1.234,56 formats
+    let num: number
+    if (raw.includes(',') && raw.indexOf(',') > raw.lastIndexOf('.')) {
+      num = parseFloat(raw.replace(/\./g, '').replace(',', '.'))
+    } else {
+      num = parseFloat(raw.replace(/,/g, ''))
+    }
+    if (!isNaN(num) && num > 0) amounts.push(num)
+  }
+  if (amounts.length > 0) {
+    // Largest amount is likely total value, smallest recurring is likely unit price
+    amounts.sort((a, b) => b - a)
+    totalValue = amounts[0]
+    if (amounts.length > 1 && amounts[amounts.length - 1] < totalValue * 0.5) {
+      pricePerUnit = amounts[amounts.length - 1]
+    }
+  }
+
+  // Unit type detection
+  if (/\b(m2|m²|metro[s]?\s*cuadrado|square\s*(?:meter|foot|feet)|sqft|sq\s*ft)\b/i.test(lower)) {
+    unitType = 'm2'
+  } else if (/\b(usuario|user|licencia|license|seat)\b/i.test(lower)) {
+    unitType = 'user'
+  } else if (/\b(hora|hour|hr)\b/i.test(lower)) {
+    unitType = 'hour'
+  } else if (/\b(mes|month)\b/i.test(lower) && pricePerUnit) {
+    unitType = 'month'
+  }
+
+  // Escalation rate
+  const escMatch = snippet.match(/(?:escalaci[oó]n|incremento|aumento|escalation|increase|adjustment)[^.]{0,40}?(\d+(?:[.,]\d+)?)\s*%/i)
+  if (escMatch) {
+    escalationRate = parseFloat(escMatch[1].replace(',', '.'))
+  }
+
+  // ── Renewal type detection ─────────────────────────────────────────────
+  let renewalType = 'none'
+  if (/\b(renovaci[oó]n\s+autom[aá]tica|auto[- ]?renew|automatically\s+renew)\b/i.test(lower)) {
+    renewalType = 'auto-renewal'
+  } else if (/\b(renovaci[oó]n\s+manual|manual\s+renew)\b/i.test(lower)) {
+    renewalType = 'manual'
+  } else if (/\b(indefinid[oa]|evergreen|sin\s+(?:fecha|plazo)\s+(?:de\s+)?(?:vencimiento|t[eé]rmino))\b/i.test(lower)) {
+    renewalType = 'evergreen'
+  }
+
+  // ── Notice days ────────────────────────────────────────────────────────
+  let noticeDays = 30
+  const noticeMatch = snippet.match(/(?:aviso|notificaci[oó]n|notice|preaviso)[^.]{0,30}?(\d+)\s*(?:d[ií]as|days)/i)
+  if (noticeMatch) noticeDays = parseInt(noticeMatch[1])
+
+  // ── Risk score heuristic ───────────────────────────────────────────────
+  let riskScore = 5
+  const riskUp = [/penalidad/i, /indemniz/i, /exclusiv/i, /irrevocable/i, /sin l[ií]mite/i, /responsabilidad ilimitada/i, /penalty/i, /unlimited liability/i]
+  const riskDown = [/mediaci[oó]n/i, /arbitraje/i, /resoluci[oó]n de conflictos/i, /fuerza mayor/i, /seguro/i, /mediation/i, /force majeure/i, /insurance/i]
+  for (const r of riskUp) if (r.test(lower)) riskScore = Math.min(10, riskScore + 1)
+  for (const r of riskDown) if (r.test(lower)) riskScore = Math.max(1, riskScore - 1)
+
+  // ── Status ─────────────────────────────────────────────────────────────
   let status: 'active' | 'expired' | 'pending' = 'active'
   if (endDate) {
     const end = new Date(endDate)
@@ -140,13 +253,17 @@ function extractBasicInfo(text: string, contractName: string): ParsedContractDat
     party_b: partyB,
     start_date: startDate ?? undefined,
     end_date: endDate ?? undefined,
-    renewal_type: 'none',
-    notice_days: 30,
+    renewal_type: renewalType,
+    notice_days: noticeDays,
     risk_score: riskScore,
     status,
-    ai_summary: 'Análisis básico (sin IA). Sube el contrato nuevamente para un análisis completo con Claude AI.',
-    improvement_tips: ['No se pudo completar el análisis con IA — intenta nuevamente más tarde para obtener recomendaciones detalladas.'],
+    ai_summary: 'Análisis básico (sin IA). Configura tu clave de IA en Ajustes para un análisis completo.',
+    improvement_tips: ['Configura tu clave de IA en Ajustes para obtener recomendaciones detalladas de mejora.'],
     obligations: [],
+    ...(totalValue !== undefined && { total_value: totalValue }),
+    ...(pricePerUnit !== undefined && { price_per_unit: pricePerUnit }),
+    ...(unitType !== undefined && { unit_type: unitType }),
+    ...(escalationRate !== undefined && { escalation_rate: escalationRate }),
   }
 }
 
@@ -327,6 +444,10 @@ export async function POST(request: NextRequest) {
       ai_summary: parsed.ai_summary ?? null,
       improvement_tips: parsed.improvement_tips ?? [],
       user_id: userId,
+      total_value: parsed.total_value ?? null,
+      price_per_unit: parsed.price_per_unit ?? null,
+      unit_type: parsed.unit_type ?? null,
+      escalation_rate: parsed.escalation_rate ?? null,
     }
 
     const { data: contractData, error: contractError } = await supabase

@@ -73,6 +73,7 @@ export default function ContractsPage() {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState<Contract | null>(null);
+  const [uploadBasicOnly, setUploadBasicOnly] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [aiKeyInfo, setAiKeyInfo] = useState<{ provider: string | null; keyHint: string | null }>({ provider: null, keyHint: null });
@@ -117,6 +118,7 @@ export default function ContractsPage() {
     setSelectedFile(null);
     setUploadError(null);
     setUploadSuccess(null);
+    setUploadBasicOnly(false);
     setModalTab("text");
     setUploading(false);
   };
@@ -170,6 +172,7 @@ export default function ContractsPage() {
 
       const data = await res!.json();
       setUploadSuccess(data.contract ?? data);
+      setUploadBasicOnly(!!data.basicOnly);
       fetchContracts();
     } catch (e) {
       setUploadError(e instanceof Error ? e.message : t.upload.failed);
@@ -458,6 +461,19 @@ export default function ContractsPage() {
                     </svg>
                     <span className="text-sm font-semibold text-emerald-800">{t.upload.success}</span>
                   </div>
+                  {uploadBasicOnly && (
+                    <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-200 rounded-lg px-3.5 py-2.5 text-xs">
+                      <svg className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <div>
+                        <p className="font-medium text-amber-800">Análisis básico</p>
+                        <p className="text-amber-600 mt-0.5">
+                          <a href="/settings" className="underline hover:text-amber-800">Configura tu clave de IA</a> para obtener análisis completo con puntuación de riesgo, obligaciones y recomendaciones.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                   <div className="space-y-2 text-xs text-emerald-700">
                     <div className="flex justify-between"><span className="font-medium">Name:</span><span>{uploadSuccess.name}</span></div>
                     <div className="flex justify-between"><span className="font-medium">Type:</span><span>{uploadSuccess.type}</span></div>

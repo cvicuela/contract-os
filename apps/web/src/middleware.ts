@@ -9,8 +9,8 @@ export default auth((req) => {
   const isDemo = req.cookies.get('demo_mode')?.value === '1'
   const { pathname } = req.nextUrl
 
-  // Demo mode is read-only — block all write operations on protected routes
-  if (isDemo && WRITE_METHODS.has(req.method) && DEMO_WRITE_BLOCKED.some(p => pathname.startsWith(p))) {
+  // Demo mode is read-only — block write operations unless user is also authenticated
+  if (isDemo && !isLoggedIn && WRITE_METHODS.has(req.method) && DEMO_WRITE_BLOCKED.some(p => pathname.startsWith(p))) {
     return NextResponse.json({ error: "Demo mode is read-only" }, { status: 403 })
   }
 

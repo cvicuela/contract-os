@@ -126,16 +126,14 @@ export default function ContractTimeline({
 
   const nowIndex = timelineData.findIndex((d) => d.isNow)
 
-  const hasRenewals = hasFinancials || hasPrice
-
   const views: { key: ViewMode; label: string; available: boolean }[] = [
     { key: 'value', label: t.contractTimeline?.value ?? 'Cumulative Value', available: hasFinancials },
     { key: 'price', label: t.contractTimeline?.priceUnit ?? `Price/${unitType === 'm2' ? 'm²' : 'sqft'}`, available: hasPrice },
-    { key: 'renewals', label: t.contractTimeline?.renewals ?? 'Price by Renewal', available: hasRenewals },
+    { key: 'renewals', label: t.contractTimeline?.renewals ?? 'Price by Renewal', available: true },
   ]
 
   const availableViews = views.filter((v) => v.available)
-  const activeView = availableViews.find((v) => v.key === view) ? view : availableViews[0]?.key ?? 'risk'
+  const activeView = availableViews.find((v) => v.key === view) ? view : availableViews[0]?.key ?? 'renewals'
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-5">
@@ -160,7 +158,7 @@ export default function ContractTimeline({
         </div>
       </div>
 
-      {rate > 0 && (activeView === 'value' || activeView === 'price') && (
+      {rate > 0 && (activeView === 'value' || activeView === 'price' || activeView === 'renewals') && (
         <p className="text-xs text-gray-400 mb-3">
           {t.contractTimeline?.escalation ?? 'Annual escalation'}: {rate}%
         </p>

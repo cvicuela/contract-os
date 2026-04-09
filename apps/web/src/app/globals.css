@@ -4,6 +4,23 @@
   --font-sans: var(--font-inter);
 }
 
+/* ─── Focus-visible — WCAG 2.1 AA (2.4.7) ──────────────────────────── */
+:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Remove double outlines on buttons that already show custom focus */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+}
+
 /* ─── Print Styles — 8.5×11 Letter ───────────────────────────────────── */
 @media print {
   @page {

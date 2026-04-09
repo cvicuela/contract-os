@@ -362,6 +362,27 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* Trial usage indicator — shown when user has contracts */}
+      {stats && stats.total_contracts > 0 && stats.total_contracts <= 1 && (
+        <div className="flex items-center justify-between gap-4 bg-amber-50 border border-amber-200 rounded-xl px-5 py-3">
+          <div className="flex items-center gap-3">
+            <svg className="w-5 h-5 text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <p className="text-sm font-medium text-amber-800">Free Trial: {stats.total_contracts}/1 contracts used</p>
+              <p className="text-xs text-amber-600 mt-0.5">Upgrade to Starter for up to 10 contracts per month</p>
+            </div>
+          </div>
+          <a
+            href="/login#pricing"
+            className="shrink-0 text-xs font-medium text-amber-700 bg-amber-100 hover:bg-amber-200 px-3 py-1.5 rounded-lg transition-colors"
+          >
+            Upgrade
+          </a>
+        </div>
+      )}
+
       {/* Analytics Charts */}
       <DashboardCharts />
 
@@ -395,7 +416,28 @@ export default function DashboardPage() {
                 </tr>
               ) : contracts.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-10 text-center text-sm text-gray-400">{t.dashboard.noContracts}</td>
+                  <td colSpan={7} className="px-4 py-16">
+                    <div className="flex flex-col items-center text-center">
+                      <div className="w-16 h-16 rounded-2xl bg-indigo-50 flex items-center justify-center mb-4">
+                        <svg className="w-8 h-8 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                      </div>
+                      <h3 className="text-sm font-semibold text-gray-900 mb-1">{t.upload.title}</h3>
+                      <p className="text-sm text-gray-500 max-w-sm mb-4">
+                        {t.contractsPage.noContracts}
+                      </p>
+                      <button
+                        onClick={() => router.push('/contracts?upload=true')}
+                        className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                        {t.contractsPage.uploadContract}
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ) : (
                 contracts.map((c) => {
@@ -451,7 +493,24 @@ export default function DashboardPage() {
           ) : statsError ? (
             <div className="px-4 py-6 text-center text-sm text-red-600">{statsError}</div>
           ) : contracts.length === 0 ? (
-            <div className="px-4 py-10 text-center text-sm text-gray-400">{t.dashboard.noContracts}</div>
+            <div className="px-4 py-12 flex flex-col items-center text-center">
+              <div className="w-14 h-14 rounded-xl bg-indigo-50 flex items-center justify-center mb-3">
+                <svg className="w-7 h-7 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <h3 className="text-sm font-semibold text-gray-900 mb-1">{t.upload.title}</h3>
+              <p className="text-xs text-gray-500 mb-3">{t.contractsPage.noContracts}</p>
+              <button
+                onClick={() => router.push('/contracts?upload=true')}
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                {t.contractsPage.uploadContract}
+              </button>
+            </div>
           ) : (
             contracts.map((c) => {
               const risk = getRiskColor(c.risk_score);

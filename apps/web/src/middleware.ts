@@ -16,6 +16,8 @@ export default auth((req) => {
 
   const isPublic = (
     pathname.startsWith("/login") ||
+    pathname.startsWith("/terms") ||
+    pathname.startsWith("/privacy") ||
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/api/demo") ||
     pathname.startsWith("/api/paypal") ||

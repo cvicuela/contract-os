@@ -8,8 +8,14 @@ const SUPABASE_URL = process.env.SUPABASE_URL!
 const SUPABASE_KEY = process.env.SUPABASE_KEY!
 
 export async function GET() {
-  const { session, error: authError } = await requireAuth()
+  const { session, isDemo, error: authError } = await requireAuth()
   if (authError) return authError
+
+  if (isDemo) {
+    return NextResponse.json({
+      user: { id: 'demo', name: 'Demo User', email: 'demo@contractos.app', plan: 'trial' },
+    })
+  }
 
   const email = session!.user!.email
 

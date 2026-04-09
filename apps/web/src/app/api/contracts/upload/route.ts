@@ -261,20 +261,15 @@ function buildAlerts(
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId, error: authError } = await requireAuth()
+    const { userId, error: authError, isDemo } = await requireAuth()
     if (authError) return authError
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
-
-    // ── Demo mode: skip trial checks ────────────────────────────────────────
-    const cookieHeader = request.headers.get('cookie') ?? ''
-    const isDemo = cookieHeader.includes('demo_mode=1')
-
-    // ── Trial enforcement (for real users) ──────────────────────────────────
-    if (!isDemo) {
-      // TODO: replace with real session user email once auth is re-enabled
-      // For now, trial check is skipped for direct API access
+    // Demo mode cannot create contracts (blocks AI cost abuse)
+    if (isDemo) {
+      return NextResponse.json({ error: 'Demo mode is read-only' }, { status: 403 })
     }
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
     const contentType = request.headers.get('content-type') ?? ''
 
     let contractText = ''

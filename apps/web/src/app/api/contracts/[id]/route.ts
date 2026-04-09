@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { requireAuth } from '@/lib/api-auth'
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 const SUPABASE_URL = process.env.SUPABASE_URL!
 const SUPABASE_KEY = process.env.SUPABASE_KEY!
 
@@ -60,8 +62,8 @@ export async function GET(
 
     const { id } = await context.params
 
-    if (!id) {
-      return NextResponse.json({ error: 'Contract ID is required' }, { status: 400 })
+    if (!id || !UUID_RE.test(id)) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 })
     }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
@@ -92,7 +94,7 @@ export async function GET(
       }
       console.error('Supabase error fetching contract:', contractResult.error)
       return NextResponse.json(
-        { error: 'Failed to fetch contract' },
+        { error: 'Internal server error' },
         { status: 500 }
       )
     }
@@ -127,8 +129,8 @@ export async function DELETE(
 
     const { id } = await context.params
 
-    if (!id) {
-      return NextResponse.json({ error: 'Contract ID is required' }, { status: 400 })
+    if (!id || !UUID_RE.test(id)) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 })
     }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)

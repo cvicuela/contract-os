@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json()
   const { provider, apiKey } = body as { provider?: string; apiKey?: string }
 
-  if (!provider || !VALID_PROVIDERS.includes(provider as any)) {
+  if (!provider || !(VALID_PROVIDERS as readonly string[]).includes(provider)) {
     return NextResponse.json({ error: 'Invalid provider' }, { status: 400 })
   }
   if (!apiKey || typeof apiKey !== 'string' || apiKey.trim().length < 10) {

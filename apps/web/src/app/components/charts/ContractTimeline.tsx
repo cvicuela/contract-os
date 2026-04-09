@@ -5,8 +5,6 @@ import { useI18n } from '@/i18n/context'
 import {
   AreaChart,
   Area,
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   Tooltip,
@@ -22,7 +20,6 @@ interface ContractTimelineProps {
   pricePerUnit: number | null
   unitType: string | null
   escalationRate: number | null
-  riskScore: number
   obligations: Array<{ next_due_date: string; status: string }>
 }
 
@@ -41,7 +38,6 @@ export default function ContractTimeline({
   pricePerUnit,
   unitType,
   escalationRate,
-  riskScore,
   obligations,
 }: ContractTimelineProps) {
   const { t, dateLocale } = useI18n()

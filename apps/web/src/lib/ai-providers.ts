@@ -69,7 +69,7 @@ async function parseWithAnthropic(userMessage: string, apiKey: string): Promise<
     system: EXTRACT_PROMPT,
     messages: [{ role: 'user', content: userMessage }],
   })
-  let raw = msg.content[0].type === 'text' ? msg.content[0].text : ''
+  const raw = msg.content[0].type === 'text' ? msg.content[0].text : ''
   let json = stripFences(raw)
   if (msg.stop_reason === 'max_tokens') json = repairTruncatedJson(json)
   return JSON.parse(json)

@@ -12,7 +12,7 @@ const PROVIDERS = [
 
 export default function SettingsPage() {
   const { t } = useI18n()
-  const router = useRouter()
+  void useRouter() // kept for future navigation needs
   const [provider, setProvider] = useState('anthropic')
   const [apiKey, setApiKey] = useState('')
   const [showKey, setShowKey] = useState(false)

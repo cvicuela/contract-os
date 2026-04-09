@@ -303,7 +303,6 @@ export default function ContractDetailPage() {
               pricePerUnit={contract.price_per_unit}
               unitType={contract.unit_type}
               escalationRate={contract.escalation_rate}
-              riskScore={contract.risk_score}
               obligations={obligations}
             />
           )}

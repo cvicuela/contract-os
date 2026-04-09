@@ -116,6 +116,7 @@ export default function DashboardPage() {
   const [statsError, setStatsError] = useState<string | null>(null);
   const [runningChecks, setRunningChecks] = useState(false);
   const [checksResult, setChecksResult] = useState<string | null>(null);
+  const [hasAiKey, setHasAiKey] = useState<boolean | null>(null);
 
   // Modal state
   const [showAllContracts, setShowAllContracts] = useState(false);
@@ -139,6 +140,12 @@ export default function DashboardPage() {
         setLoadingContracts(false)
         setLoadingAlerts(false)
       })
+
+    // Check if user has AI key configured
+    fetch('/api/user/ai-key')
+      .then((r) => r.json())
+      .then((data) => setHasAiKey(!!data.provider))
+      .catch(() => setHasAiKey(null))
   }, []);
 
   const dismissAlert = async (alertId: string) => {
@@ -380,6 +387,27 @@ export default function DashboardPage() {
           >
             Upgrade
           </a>
+        </div>
+      )}
+
+      {/* AI key not configured banner */}
+      {hasAiKey === false && (
+        <div className="flex items-center justify-between gap-4 bg-indigo-50 border border-indigo-200 rounded-xl px-5 py-3">
+          <div className="flex items-center gap-3">
+            <svg className="w-5 h-5 text-indigo-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+            <div>
+              <p className="text-sm font-medium text-indigo-800">{t.settings.noKeyConfigured}</p>
+              <p className="text-xs text-indigo-600 mt-0.5">{t.settings.configureKeyPrompt}</p>
+            </div>
+          </div>
+          <Link
+            href="/settings"
+            className="shrink-0 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-lg transition-colors"
+          >
+            {t.userMenu.settings}
+          </Link>
         </div>
       )}
 

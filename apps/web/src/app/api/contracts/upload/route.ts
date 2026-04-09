@@ -78,6 +78,12 @@ async function extractTextFromBuffer(buffer: Buffer, mimeType: string, fileName:
   return buffer.toString('utf8')
 }
 
+function isValidDate(d: string | undefined | null): boolean {
+  if (!d) return false
+  const date = new Date(d)
+  return !isNaN(date.getTime()) && /^\d{4}-\d{2}-\d{2}$/.test(d) && date.getFullYear() > 2000 && date.getFullYear() < 2100
+}
+
 function extractBasicInfo(text: string, contractName: string): ParsedContractData {
   const snippet = text.slice(0, 15_000)
   const lower = snippet.toLowerCase()
@@ -130,8 +136,12 @@ function extractBasicInfo(text: string, contractName: string): ParsedContractDat
   }
 
   dates.sort((a, b) => a.getTime() - b.getTime())
-  // Deduplicate by date string
-  const uniqueDates = [...new Set(dates.map(d => d.toISOString().split('T')[0]))]
+  // Deduplicate and validate dates
+  const uniqueDates = [...new Set(
+    dates
+      .filter(d => d.getFullYear() > 2000 && d.getFullYear() < 2100)
+      .map(d => d.toISOString().split('T')[0])
+  )]
   const startDate = uniqueDates.length > 0 ? uniqueDates[0] : null
   const endDate = uniqueDates.length > 1 ? uniqueDates[uniqueDates.length - 1] : null
 
@@ -433,8 +443,8 @@ export async function POST(request: NextRequest) {
       type: parsed.type ?? 'Unknown',
       party_a: parsed.party_a ?? '',
       party_b: parsed.party_b ?? '',
-      start_date: parsed.start_date ?? null,
-      end_date: parsed.end_date ?? null,
+      start_date: isValidDate(parsed.start_date) ? parsed.start_date! : null,
+      end_date: isValidDate(parsed.end_date) ? parsed.end_date! : null,
       renewal_type: parsed.renewal_type ?? 'none',
       notice_days: parsed.notice_days ?? 0,
       risk_score: parsed.risk_score ?? 0,
